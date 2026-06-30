@@ -3,42 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marko's Hubs</title>
+<title>Atlas</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
     --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a24;
     --border: #2a2a3a; --text: #f0f0f8; --text2: #9090a8; --text3: #5a5a72;
+    --accent: #6c63ff; --accent2: #a78bfa;
   }
-  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 60px 24px; }
-  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
-  h1 { font-family: 'DM Mono', monospace; font-size: 32px; font-weight: 400; letter-spacing: -0.02em; margin-bottom: 8px; }
-  .sub { font-size: 13px; color: var(--text2); margin-bottom: 50px; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 70px 24px; position: relative; overflow-x: hidden; }
+  #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .page-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+  .wordmark { display: flex; align-items: center; gap: 0; margin-bottom: 10px; }
+  .wordmark svg { width: 50px; height: 50px; margin-right: -6px; }
+  .wordmark-text { font-size: 38px; font-weight: 600; letter-spacing: -0.01em; }
+
+  .sub { font-size: 13px; color: var(--text2); margin-bottom: 54px; }
+
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; width: 100%; max-width: 760px; }
   .tile { position: relative; padding: 24px 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; text-decoration: none; color: var(--text); transition: all 0.2s ease; overflow: hidden; }
-  .tile:hover { border-color: var(--accent, #6c63ff); transform: translateY(-2px); background: var(--surface2); }
+  .tile:hover { border-color: var(--tint, var(--accent)); transform: translateY(-2px); background: var(--surface2); }
   .tile.disabled { opacity: 0.4; pointer-events: none; }
   .tile-icon { font-size: 26px; margin-bottom: 14px; display: block; }
   .tile-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
   .tile-desc { font-size: 12px; color: var(--text3); line-height: 1.4; }
   .soon-badge { position: absolute; top: 16px; right: 16px; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); border: 1px solid var(--border); padding: 3px 8px; border-radius: 10px; }
+
   .footer { margin-top: 60px; font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
 </style>
 </head>
 <body>
-  <div class="eyebrow">Command Center</div>
-  <h1>Marko's Hubs</h1>
-  <div class="sub">Pick a Hub to open</div>
+<canvas id="starfield"></canvas>
+<div class="page-content">
+
+  <div class="wordmark">
+    <svg viewBox="40 80 600 460" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bgF" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#15151f"/><stop offset="100%" stop-color="#0a0a0f"/>
+        </linearGradient>
+        <linearGradient id="lnF" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#6c63ff"/>
+        </linearGradient>
+        <clipPath id="roundClip"><rect x="40" y="80" width="600" height="460" rx="40"/></clipPath>
+      </defs>
+      <g clip-path="url(#roundClip)">
+        <rect x="-100" y="-100" width="900" height="900" rx="148" fill="url(#bgF)"/>
+      </g>
+      <g stroke="url(#lnF)" stroke-width="8.5" fill="none" stroke-linecap="round">
+        <line x1="340" y1="150" x2="209" y2="500"/>
+        <line x1="340" y1="150" x2="471" y2="500"/>
+        <line x1="262" y1="368" x2="418" y2="368"/>
+      </g>
+      <g fill="#f0f0f8">
+        <circle cx="340" cy="150" r="19.5"/>
+        <circle cx="209" cy="500" r="16"/>
+        <circle cx="471" cy="500" r="16"/>
+        <circle cx="262" cy="368" r="12"/>
+        <circle cx="418" cy="368" r="12"/>
+      </g>
+    </svg>
+    <span class="wordmark-text">tlas</span>
+  </div>
+
+  <div class="sub">Marko's personal command center</div>
 
   <div class="grid">
-    <a class="tile" href="daily-hub.html" style="--accent:#6c63ff">
+    <a class="tile" href="daily-hub.html" style="--tint:#6c63ff">
       <span class="tile-icon">✅</span>
       <div class="tile-name">Daily Hub</div>
       <div class="tile-desc">Tasks, recurring work items, wellness tracking, streaks.</div>
     </a>
 
-    <a class="tile" href="korean-hub.html" style="--accent:#ef6461">
+    <a class="tile" href="korean-hub.html" style="--tint:#ef6461">
       <span class="tile-icon">🇰🇷</span>
       <div class="tile-name">Korean Hub</div>
       <div class="tile-desc">Daily phrases, flashcard review, vocab bank with Hana.</div>
@@ -73,6 +112,300 @@
     </a>
   </div>
 
-  <div class="footer">marko-hubs · built with Claude</div>
+  <div class="footer">atlas · built with Claude</div>
+
+</div>
+
+<script>
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let w, h, stars = [], planets = [], shootingStars = [];
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const STAR_COUNT = 200;
+for (let i = 0; i < STAR_COUNT; i++) {
+  stars.push({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    r: Math.random() * 1.4 + 0.4,
+    baseAlpha: Math.random() * 0.6 + 0.25,
+    phase: Math.random() * Math.PI * 2,
+    speed: Math.random() * 0.015 + 0.005
+  });
+}
+
+planets = [
+  { x: 0.08, y: 0.18, r: 34, color: '#3a3550', ring: false, glow: 'rgba(167,139,250,0.08)' },
+  { x: 0.92, y: 0.72, r: 22, color: '#4a3328', ring: true, glow: 'rgba(239,100,97,0.07)' },
+  { x: 0.85, y: 0.12, r: 12, color: '#2e3a52', ring: false, glow: 'rgba(108,99,255,0.06)' }
+];
+
+function randDir() { return Math.random() > 0.5 ? 1 : -1; }
+function randSpeed(min, max) { return (min + Math.random() * (max - min)) * randDir(); }
+
+let floaters = [
+  { type: 'satellite', x: Math.random(), y: Math.random(), vx: randSpeed(0.00008, 0.00016), vy: randSpeed(0.00002, 0.00006), rot: Math.random() * Math.PI * 2 },
+  { type: 'ufo', x: Math.random(), y: Math.random(), vx: randSpeed(0.00006, 0.00012), vy: randSpeed(0.00002, 0.00005), rot: 0 },
+  { type: 'astronaut', x: Math.random(), y: Math.random(), vx: randSpeed(0.00004, 0.00008), vy: randSpeed(0.00003, 0.00007), rot: 0, spin: Math.random() * Math.PI * 2 },
+  { type: 'asteroid', x: Math.random(), y: Math.random(), vx: randSpeed(0.00005, 0.0001), vy: randSpeed(0.00004, 0.00009), rot: Math.random() * Math.PI * 2, spin: randSpeed(0.001, 0.0025), scale: 0.8 + Math.random() * 0.5 },
+  { type: 'asteroid', x: Math.random(), y: Math.random(), vx: randSpeed(0.00004, 0.00008), vy: randSpeed(0.00004, 0.00009), rot: Math.random() * Math.PI * 2, spin: randSpeed(0.001, 0.002), scale: 0.6 + Math.random() * 0.4 }
+];
+
+function wrapPos(v) {
+  if (v < -0.05) return 1.05;
+  if (v > 1.05) return -0.05;
+  return v;
+}
+
+function drawSatellite(px, py, rot) {
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(rot);
+  ctx.fillStyle = 'rgba(180,180,200,0.55)';
+  ctx.fillRect(-5, -3, 10, 6);
+  ctx.strokeStyle = 'rgba(167,139,250,0.5)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(-16, -5, 9, 10);
+  ctx.strokeRect(7, -5, 9, 10);
+  ctx.beginPath();
+  ctx.moveTo(-7, 0); ctx.lineTo(-16, 0);
+  ctx.moveTo(7, 0); ctx.lineTo(16, 0);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawUfo(px, py) {
+  ctx.save();
+  ctx.translate(px, py);
+  const grad = ctx.createRadialGradient(0, -2, 1, 0, -2, 22);
+  grad.addColorStop(0, 'rgba(108,99,255,0.18)');
+  grad.addColorStop(1, 'rgba(108,99,255,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(0, -2, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(200,200,215,0.6)';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 14, 4.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(167,139,250,0.55)';
+  ctx.beginPath();
+  ctx.ellipse(0, -3, 7, 6, 0, Math.PI, 0);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(244,162,89,0.7)';
+  [-8, 0, 8].forEach(dx => {
+    ctx.beginPath();
+    ctx.arc(dx, 1.5, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawAstronaut(px, py, spin) {
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(Math.sin(spin) * 0.3);
+  ctx.fillStyle = 'rgba(210,210,222,0.55)';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 6, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, -9, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(108,99,255,0.4)';
+  ctx.beginPath();
+  ctx.arc(0, -9, 3.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(210,210,222,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-6, -2); ctx.lineTo(-11, 4);
+  ctx.moveTo(6, -2); ctx.lineTo(11, -6);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawAsteroid(px, py, rot, scale) {
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(rot);
+  ctx.scale(scale, scale);
+  ctx.fillStyle = 'rgba(90,90,114,0.5)';
+  ctx.beginPath();
+  ctx.moveTo(-7, -2);
+  ctx.lineTo(-3, -7);
+  ctx.lineTo(4, -6);
+  ctx.lineTo(8, 0);
+  ctx.lineTo(4, 6);
+  ctx.lineTo(-4, 7);
+  ctx.lineTo(-8, 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(60,60,80,0.4)';
+  ctx.beginPath();
+  ctx.arc(-1, -1, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFloaters() {
+  floaters.forEach(f => {
+    f.x += f.vx;
+    f.y += f.vy;
+    f.x = wrapPos(f.x);
+    f.y = wrapPos(f.y);
+    const px = f.x * w;
+    const py = f.y * h;
+
+    if (f.type === 'satellite') {
+      f.rot += 0.0006;
+      drawSatellite(px, py, f.rot);
+    } else if (f.type === 'ufo') {
+      drawUfo(px, py);
+    } else if (f.type === 'astronaut') {
+      f.spin += 0.01;
+      drawAstronaut(px, py, f.spin);
+    } else if (f.type === 'asteroid') {
+      f.rot += f.spin;
+      drawAsteroid(px, py, f.rot, f.scale);
+    }
+  });
+}
+
+const CONNECT_DIST = 120;
+let t = 0;
+
+function spawnShootingStar() {
+  const fromLeft = Math.random() > 0.5;
+  const startY = Math.random() * h * 0.4;
+  const angle = (Math.random() * 0.2 + 0.15);
+  const speed = 7 + Math.random() * 2;
+  const vx = (fromLeft ? 1 : -1) * speed;
+  const vy = Math.tan(angle) * speed;
+  const travelDist = w + 120;
+  const framesToCross = travelDist / Math.abs(vx);
+  shootingStars.push({
+    x: fromLeft ? -60 : w + 60,
+    y: startY,
+    vx: vx,
+    vy: vy,
+    life: 0,
+    maxLife: Math.ceil(framesToCross) + 10,
+    trail: []
+  });
+}
+
+function maybeSpawnShootingStar() {
+  if (Math.random() < 0.0009 && shootingStars.length < 1) spawnShootingStar();
+}
+
+function drawPlanets() {
+  planets.forEach(p => {
+    const px = p.x * w;
+    const py = p.y * h;
+    const grad = ctx.createRadialGradient(px, py, 0, px, py, p.r * 3);
+    grad.addColorStop(0, p.glow);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(px, py, p.r * 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (p.ring) {
+      ctx.strokeStyle = 'rgba(244,162,89,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(px, py, p.r * 1.7, p.r * 0.55, -0.4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    const bodyGrad = ctx.createRadialGradient(px - p.r * 0.3, py - p.r * 0.3, p.r * 0.1, px, py, p.r);
+    bodyGrad.addColorStop(0, p.color);
+    bodyGrad.addColorStop(1, '#0a0a0f');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.arc(px, py, p.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawShootingStars() {
+  shootingStars = shootingStars.filter(s => s.life < s.maxLife);
+  shootingStars.forEach(s => {
+    s.x += s.vx;
+    s.y += s.vy;
+    s.life++;
+
+    const tailX = s.x - s.vx * 6;
+    const tailY = s.y - s.vy * 6;
+    const fadeIn = Math.min(s.life / 8, 1);
+    const fadeWindow = Math.max(15, s.maxLife * 0.15);
+    const fadeOut = s.life > s.maxLife - fadeWindow ? (s.maxLife - s.life) / fadeWindow : 1;
+    const alpha = fadeIn * fadeOut;
+
+    const grad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
+    grad.addColorStop(0, 'rgba(167,139,250,0)');
+    grad.addColorStop(0.6, `rgba(167,139,250,${0.5 * alpha})`);
+    grad.addColorStop(1, `rgba(255,255,255,${0.95 * alpha})`);
+
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(tailX, tailY);
+    ctx.lineTo(s.x, s.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 1.6, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+    ctx.fill();
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, w, h);
+
+  drawPlanets();
+  drawFloaters();
+
+  for (let i = 0; i < stars.length; i++) {
+    for (let j = i + 1; j < stars.length; j++) {
+      const dx = stars[i].x - stars[j].x;
+      const dy = stars[i].y - stars[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < CONNECT_DIST) {
+        ctx.strokeStyle = `rgba(108,99,255,${0.1 * (1 - dist / CONNECT_DIST)})`;
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(stars[i].x, stars[i].y);
+        ctx.lineTo(stars[j].x, stars[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  stars.forEach(s => {
+    const twinkle = Math.sin(t * s.speed + s.phase) * 0.35 + 0.75;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(240,240,248,${s.baseAlpha * twinkle})`;
+    ctx.fill();
+  });
+
+  maybeSpawnShootingStar();
+  drawShootingStars();
+
+  t += 1;
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
 </body>
 </html>
