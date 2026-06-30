@@ -164,25 +164,6 @@
 </head>
 <body>
 
-<svg class="vine-deco vine-left" width="60" height="320" viewBox="0 0 60 320" xmlns="http://www.w3.org/2000/svg">
-  <path d="M30 0 Q10 40 30 80 Q50 120 25 160 Q5 195 30 230 Q48 260 22 300" stroke="#7a9968" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>
-  <ellipse cx="14" cy="35" rx="10" ry="6" fill="#8fae7e" opacity="0.6" transform="rotate(-30 14 35)"/>
-  <ellipse cx="44" cy="70" rx="9" ry="5" fill="#a3c190" opacity="0.55" transform="rotate(25 44 70)"/>
-  <ellipse cx="12" cy="120" rx="11" ry="6" fill="#7a9968" opacity="0.6" transform="rotate(-20 12 120)"/>
-  <ellipse cx="38" cy="165" rx="9" ry="5" fill="#8fae7e" opacity="0.5" transform="rotate(30 38 165)"/>
-  <ellipse cx="10" cy="210" rx="10" ry="6" fill="#a3c190" opacity="0.55" transform="rotate(-25 10 210)"/>
-  <ellipse cx="36" cy="255" rx="9" ry="5" fill="#7a9968" opacity="0.5" transform="rotate(20 36 255)"/>
-</svg>
-
-<svg class="vine-deco vine-right" width="60" height="280" viewBox="0 0 60 280" xmlns="http://www.w3.org/2000/svg">
-  <path d="M30 0 Q50 35 28 75 Q8 110 32 145 Q52 175 26 210 Q8 240 30 270" stroke="#7a9968" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>
-  <ellipse cx="46" cy="30" rx="10" ry="6" fill="#a3c190" opacity="0.6" transform="rotate(30 46 30)"/>
-  <ellipse cx="16" cy="65" rx="9" ry="5" fill="#7a9968" opacity="0.55" transform="rotate(-25 16 65)"/>
-  <ellipse cx="48" cy="110" rx="11" ry="6" fill="#8fae7e" opacity="0.6" transform="rotate(20 48 110)"/>
-  <ellipse cx="20" cy="150" rx="9" ry="5" fill="#a3c190" opacity="0.5" transform="rotate(-30 20 150)"/>
-  <ellipse cx="48" cy="195" rx="10" ry="6" fill="#7a9968" opacity="0.55" transform="rotate(25 48 195)"/>
-</svg>
-
 <div class="page-wrap">
   <div class="header">
     <div class="header-left">
@@ -194,7 +175,7 @@
 
   <div class="chef-card">
     <div class="chef-avatar">👨‍🍳</div>
-    <div class="chef-msg" id="chefMsg"><b>Enzo:</b> Ready to cook something good today? Tell me what's in the kitchen and I'll find you something delicious.</div>
+    <div class="chef-msg"><b>Enzo:</b> Ready to cook something good today? Tell me what's in the kitchen and I'll find you something delicious.</div>
   </div>
 
   <div class="view-bar" id="viewBar">
@@ -209,296 +190,369 @@
 </div>
 
 <script>
-(function() {
-  const today = new Date();
-  const hour = today.getHours();
+const today = new Date();
+const hour = today.getHours();
 
-  let kitchenItems = JSON.parse(localStorage.getItem('tk_kitchen') || 'null') || [
-    { id: 'k1', name: 'Garlic', loc: 'pantry', expiry: '', flag: 'green' },
-    { id: 'k2', name: 'Yukon gold potatoes', loc: 'pantry', expiry: '', flag: 'green' },
-    { id: 'k3', name: 'Olive oil', loc: 'pantry', expiry: '', flag: 'green' }
-  ];
-  let recipes = JSON.parse(localStorage.getItem('tk_recipes') || 'null') || [
-    {
-      id: 'r1', title: 'Aglio e Olio', source: 'enzo',
-      desc: 'The simplest, most honest pasta there is — garlic, good olive oil, chili flake, parsley. Five ingredients, perfect technique.',
-      time: '15 min', serves: '2',
-      ingredients: ['200g spaghetti', '6 cloves garlic, thinly sliced', '5 tbsp extra virgin olive oil', '1/2 tsp chili flakes (light, your spice level)', 'Handful fresh parsley, chopped', 'Salt, pasta water'],
-      steps: [
-        'Bring a large pot of well-salted water to boil. Cook spaghetti until just shy of al dente.',
-        'While pasta cooks, gently warm olive oil in a wide pan over low-medium heat. Add sliced garlic.',
-        'Cook garlic slowly until golden, not brown — about 4-5 minutes. Burnt garlic turns bitter, so patience here.',
-        'Add chili flakes to the warm oil for the last 30 seconds to bloom the flavor.',
-        'Reserve 1 cup pasta water, then drain pasta and add directly to the pan.',
-        'Toss vigorously, adding splashes of pasta water until the oil emulsifies into a light sauce that coats every strand.',
-        'Finish with parsley, a touch more olive oil, and serve immediately while it sings.'
-      ],
-      expanded: false
-    }
-  ];
-  let mamaRecipes = JSON.parse(localStorage.getItem('tk_mama') || '[]');
-  let tools = JSON.parse(localStorage.getItem('tk_tools') || 'null') || ['Non-stick pan', 'Stainless steel pan', 'Oven', 'Sheet pan', 'Chef knife', 'Cutting board'];
-  let currentView = 'today';
-
-  function saveKitchen() { localStorage.setItem('tk_kitchen', JSON.stringify(kitchenItems)); }
-  function saveRecipes() { localStorage.setItem('tk_recipes', JSON.stringify(recipes)); }
-  function saveMama() { localStorage.setItem('tk_mama', JSON.stringify(mamaRecipes)); }
-  function saveTools() { localStorage.setItem('tk_tools', JSON.stringify(tools)); }
-
-  function todayHTML() {
-    const urgent = kitchenItems.filter(function(i) { return i.flag === 'red' || i.flag === 'yellow'; });
-    let html = '<div class="section"><div class="section-header"><span class="section-label">Today\\'s Inspiration</span><div class="section-line"></div></div>';
-    if (urgent.length > 0) {
-      html += '<div class="insp-card"><div class="insp-title">Use these before they go</div><div class="insp-why">A few things in your kitchen need attention soon — ask Enzo in conversation for a recipe built around them, or check My Kitchen to manage what is flagged.</div><div class="insp-ingredients">' + urgent.map(function(i) { return '<span class="insp-chip">' + i.name + '</span>'; }).join('') + '</div></div>';
-    } else {
-      html += '<div class="insp-card"><div class="insp-title">Your kitchen looks fresh</div><div class="insp-why">Nothing urgent right now. Add items to My Kitchen so Enzo can start building suggestions around what you actually have.</div></div>';
-    }
-    html += '</div>';
-    html += '<div class="section"><div class="section-header"><span class="section-label">Quick Stats</span><div class="section-line"></div></div><div class="insp-card stats-row">' +
-      '<div class="stat-block"><div class="sv">' + kitchenItems.length + '</div><div class="sl">Items Tracked</div></div>' +
-      '<div class="stat-block"><div class="sv">' + recipes.length + '</div><div class="sl">Recipes Saved</div></div>' +
-      '<div class="stat-block"><div class="sv">' + mamaRecipes.length + '</div><div class="sl">Mama\\'s Recipes</div></div>' +
-      '</div></div>';
-    return html;
+let kitchenItems = JSON.parse(localStorage.getItem('tk_kitchen') || 'null') || [
+  { id: 'k1', name: 'Garlic', loc: 'pantry', expiry: '', flag: 'green' },
+  { id: 'k2', name: 'Yukon gold potatoes', loc: 'pantry', expiry: '', flag: 'green' },
+  { id: 'k3', name: 'Olive oil', loc: 'pantry', expiry: '', flag: 'green' },
+];
+let recipes = JSON.parse(localStorage.getItem('tk_recipes') || 'null') || [
+  {
+    id: 'r1', title: 'Aglio e Olio', source: 'enzo',
+    desc: 'The simplest, most honest pasta there is — garlic, good olive oil, chili flake, parsley. Five ingredients, perfect technique.',
+    time: '15 min', serves: '2',
+    ingredients: ['200g spaghetti', '6 cloves garlic, thinly sliced', '5 tbsp extra virgin olive oil', '1/2 tsp chili flakes (light, your spice level)', 'Handful fresh parsley, chopped', 'Salt, pasta water'],
+    steps: [
+      'Bring a large pot of well-salted water to boil. Cook spaghetti until just shy of al dente.',
+      'While pasta cooks, gently warm olive oil in a wide pan over low-medium heat. Add sliced garlic.',
+      'Cook garlic slowly until golden, not brown — about 4-5 minutes. Burnt garlic turns bitter, so patience here.',
+      'Add chili flakes to the warm oil for the last 30 seconds to bloom the flavor.',
+      'Reserve 1 cup pasta water, then drain pasta and add directly to the pan.',
+      'Toss vigorously, adding splashes of pasta water until the oil emulsifies into a light sauce that coats every strand.',
+      'Finish with parsley, a touch more olive oil, and serve immediately while it sings.'
+    ],
+    expanded: false
   }
+];
+let mamaRecipes = JSON.parse(localStorage.getItem('tk_mama') || '[]');
+let tools = JSON.parse(localStorage.getItem('tk_tools') || 'null') || ['Non-stick pan', 'Stainless steel pan', 'Oven', 'Sheet pan', 'Chef knife', 'Cutting board'];
+let currentView = 'today';
 
-  function kitchenHTML() {
-    const sorted = kitchenItems.slice().sort(function(a, b) {
-      const order = { red: 0, yellow: 1, green: 2 };
-      return order[a.flag] - order[b.flag];
-    });
-    let html = '<div class="section"><div class="section-header"><span class="section-label">My Kitchen</span><div class="section-line"></div><span class="section-count">' + kitchenItems.length + ' items</span></div>';
-    if (sorted.length === 0) html += '<div class="empty">Nothing tracked yet — add what is in your fridge and pantry below.</div>';
-    sorted.forEach(function(item) {
-      html += '<div class="kitchen-item"><div class="flag-dot flag-' + item.flag + '"></div><div class="item-info"><div class="item-name">' + item.name + '</div><div class="item-meta">' + (item.expiry ? 'Expires ' + item.expiry : 'No expiry set') + '</div></div><span class="item-loc">' + item.loc + '</span><button class="item-del" data-del-kitchen="' + item.id + '">×</button></div>';
-    });
-    html += '<div class="add-form" style="margin-top:14px;">' +
-      '<div class="add-row"><input class="add-input" id="kName" placeholder="Item name">' +
-      '<select class="add-select" id="kLoc" style="flex:0 0 110px;"><option value="fridge">Fridge</option><option value="pantry">Pantry</option><option value="counter">Counter</option></select></div>' +
-      '<div class="add-row"><input class="add-input" id="kExpiry" placeholder="Expiry date (optional, e.g. July 5)">' +
-      '<select class="add-select" id="kFlag" style="flex:0 0 120px;"><option value="green">Fresh</option><option value="yellow">Use Soon</option><option value="red">Use Now</option></select></div>' +
-      '<button class="add-btn-full" id="addKitchenBtn">+ Add to Kitchen</button></div>';
-    return html;
+function saveKitchen() { localStorage.setItem('tk_kitchen', JSON.stringify(kitchenItems)); }
+function saveRecipes() { localStorage.setItem('tk_recipes', JSON.stringify(recipes)); }
+function saveMama() { localStorage.setItem('tk_mama', JSON.stringify(mamaRecipes)); }
+function saveTools() { localStorage.setItem('tk_tools', JSON.stringify(tools)); }
+
+function todayHTML() {
+  const urgent = kitchenItems.filter(i => i.flag === 'red' || i.flag === 'yellow');
+  let html = '<div class="section"><div class="section-header"><span class="section-label">Today\'s Inspiration</span><div class="section-line"></div></div>';
+  if (urgent.length > 0) {
+    html += `<div class="insp-card">
+      <div class="insp-title">Use these before they go</div>
+      <div class="insp-why">A few things in your kitchen need attention soon — ask Enzo in conversation for a recipe built around them, or check My Kitchen to manage what's flagged.</div>
+      <div class="insp-ingredients">${urgent.map(i => `<span class="insp-chip">${i.name}</span>`).join('')}</div>
+    </div>`;
+  } else {
+    html += `<div class="insp-card">
+      <div class="insp-title">Your kitchen looks fresh</div>
+      <div class="insp-why">Nothing urgent right now. Add items to My Kitchen so Enzo can start building suggestions around what you actually have.</div>
+    </div>`;
   }
+  html += '</div>';
+  html += `<div class="section"><div class="section-header"><span class="section-label">Quick Stats</span><div class="section-line"></div></div>
+    <div class="insp-card">
+      <div class="stats-row">
+        <div class="stat-block">
+          <div class="sv">${kitchenItems.length}</div>
+          <div class="sl">Items Tracked</div>
+        </div>
+        <div class="stat-block">
+          <div class="sv">${recipes.length}</div>
+          <div class="sl">Recipes Saved</div>
+        </div>
+        <div class="stat-block">
+          <div class="sv">${mamaRecipes.length}</div>
+          <div class="sl">Mama's Recipes</div>
+        </div>
+      </div>
+    </div>`;
+  html += '</div>';
+  return html;
+}
 
-  function recipeCard(r, isMama) {
-    const sourceClass = r.source === 'mine' ? 'source-mine' : (r.source === 'mama' ? 'source-mama' : 'source-enzo');
-    const sourceLabel = r.source === 'mine' ? 'My Recipe' : (r.source === 'mama' ? "Mama's" : 'Enzo');
-    let html = '<div class="recipe-card ' + (isMama ? 'mama-card' : '') + ' ' + (r.expanded ? 'expanded' : '') + '" data-recipe-id="' + r.id + '" data-is-mama="' + isMama + '">';
-    html += '<div class="recipe-top"><div class="recipe-title">' + r.title + '</div><span class="recipe-source ' + sourceClass + '">' + sourceLabel + '</span></div>';
-    html += '<div class="recipe-desc">' + r.desc + '</div>';
-    html += '<div class="recipe-meta-row"><span>' + r.time + '</span><span>Serves ' + r.serves + '</span></div>';
-    html += '<div class="recipe-detail">';
-    html += '<div class="detail-section"><div class="detail-label">Ingredients</div><ul class="ingredient-list">' + (r.ingredients || []).map(function(i) { return '<li>' + i + '</li>'; }).join('') + '</ul></div>';
-    html += '<div class="detail-section"><div class="detail-label">Steps</div><ol class="step-list">' + (r.steps || []).map(function(s) { return '<li>' + s + '</li>'; }).join('') + '</ol></div>';
-    if (r.mamaNote) html += '<div class="mama-note"><b>In Mama\\'s words:</b><br>' + r.mamaNote + '</div>';
-    html += '<button class="del-recipe" data-del-recipe="' + r.id + '" data-del-mama="' + isMama + '">Remove recipe</button>';
-    html += '</div></div>';
-    return html;
-  }
+function kitchenHTML() {
+  const sorted = [...kitchenItems].sort((a, b) => {
+    const order = { red: 0, yellow: 1, green: 2 };
+    return order[a.flag] - order[b.flag];
+  });
+  let html = `<div class="section"><div class="section-header"><span class="section-label">My Kitchen</span><div class="section-line"></div><span class="section-count">${kitchenItems.length} items</span></div>`;
+  if (sorted.length === 0) html += `<div class="empty">Nothing tracked yet — add what's in your fridge and pantry below.</div>`;
+  sorted.forEach(item => {
+    html += `<div class="kitchen-item">
+      <div class="flag-dot flag-${item.flag}"></div>
+      <div class="item-info">
+        <div class="item-name">${item.name}</div>
+        <div class="item-meta">${item.expiry ? 'Expires ' + item.expiry : 'No expiry set'}</div>
+      </div>
+      <span class="item-loc">${item.loc}</span>
+      <button class="item-del" data-del-kitchen="${item.id}">×</button>
+    </div>`;
+  });
+  html += `<div class="add-form" style="margin-top:12px;">
+    <div class="add-row">
+      <input class="add-input" id="kName" placeholder="Item name">
+      <select class="add-select" id="kLoc" style="flex:0 0 100px;">
+        <option value="fridge">Fridge</option>
+        <option value="pantry">Pantry</option>
+        <option value="counter">Counter</option>
+      </select>
+    </div>
+    <div class="add-row">
+      <input class="add-input" id="kExpiry" placeholder="Expiry date (optional, e.g. July 5)">
+      <select class="add-select" id="kFlag" style="flex:0 0 110px;">
+        <option value="green">🟢 Fresh</option>
+        <option value="yellow">🟡 Use Soon</option>
+        <option value="red">🔴 Use Now</option>
+      </select>
+    </div>
+    <button class="add-btn-full" id="addKitchenBtn">+ Add to Kitchen</button>
+  </div>`;
+  return html;
+}
 
-  function recipesHTML() {
-    let html = '<div class="section"><div class="section-header"><span class="section-label">Recipe Book</span><div class="section-line"></div><span class="section-count">' + recipes.length + '</span></div>';
-    if (recipes.length === 0) html += '<div class="empty">No recipes saved yet — ask Enzo for ideas, or add your own.</div>';
-    recipes.forEach(function(r) { html += recipeCard(r, false); });
-    html += '<div class="add-form" style="margin-top:16px;">' +
-      '<input class="add-input" id="rTitle" placeholder="Recipe title" style="width:100%;">' +
-      '<textarea class="add-input" id="rDesc" placeholder="Short description" style="width:100%; min-height:50px; resize:vertical;"></textarea>' +
-      '<div class="add-row"><input class="add-input" id="rTime" placeholder="Time (e.g. 30 min)"><input class="add-input" id="rServes" placeholder="Serves (e.g. 2)"></div>' +
-      '<textarea class="add-input" id="rIngredients" placeholder="Ingredients (one per line)" style="width:100%; min-height:70px; resize:vertical;"></textarea>' +
-      '<textarea class="add-input" id="rSteps" placeholder="Steps (one per line)" style="width:100%; min-height:90px; resize:vertical;"></textarea>' +
-      '<button class="add-btn-full" id="addRecipeBtn">+ Save Recipe</button></div>';
-    html += '</div>';
-    return html;
-  }
+function recipesHTML() {
+  let html = `<div class="section"><div class="section-header"><span class="section-label">Recipe Book</span><div class="section-line"></div><span class="section-count">${recipes.length}</span></div>`;
+  if (recipes.length === 0) html += `<div class="empty">No recipes saved yet — ask Enzo for ideas, or add your own.</div>`;
+  recipes.forEach(r => html += recipeCardHTML(r, false));
+  html += `<div class="add-form" style="margin-top:14px;">
+    <input class="add-input" id="rTitle" placeholder="Recipe title" style="width:100%;">
+    <textarea class="add-input" id="rDesc" placeholder="Short description" style="width:100%; min-height:50px; resize:vertical;"></textarea>
+    <div class="add-row">
+      <input class="add-input" id="rTime" placeholder="Time (e.g. 30 min)">
+      <input class="add-input" id="rServes" placeholder="Serves (e.g. 2)">
+    </div>
+    <textarea class="add-input" id="rIngredients" placeholder="Ingredients (one per line)" style="width:100%; min-height:70px; resize:vertical;"></textarea>
+    <textarea class="add-input" id="rSteps" placeholder="Steps (one per line)" style="width:100%; min-height:90px; resize:vertical;"></textarea>
+    <button class="add-btn-full" id="addRecipeBtn">+ Save Recipe</button>
+  </div>`;
+  html += '</div>';
+  return html;
+}
 
-  function mamaHTML() {
-    let html = '<div class="section"><div class="section-header"><span class="section-label" style="color:var(--mama)">Mama\\'s Kitchen</span><div class="section-line"></div><span class="section-count">' + mamaRecipes.length + '</span></div>';
-    html += '<div class="insp-card" style="border-color:rgba(201,123,142,0.3); margin-bottom:16px;"><div class="insp-why">A space just for her recipes — written in her words, exactly as she would tell you.</div></div>';
-    if (mamaRecipes.length === 0) html += '<div class="empty">No recipes added yet — start preserving her recipes here.</div>';
-    mamaRecipes.forEach(function(r) { html += recipeCard(r, true); });
-    html += '<div class="add-form" style="margin-top:16px; border-color:rgba(201,123,142,0.35);">' +
-      '<input class="add-input" id="mTitle" placeholder="Recipe title" style="width:100%;">' +
-      '<textarea class="add-input" id="mDesc" placeholder="Short description" style="width:100%; min-height:50px; resize:vertical;"></textarea>' +
-      '<div class="add-row"><input class="add-input" id="mTime" placeholder="Time (e.g. 1 hr)"><input class="add-input" id="mServes" placeholder="Serves (e.g. 4)"></div>' +
-      '<textarea class="add-input" id="mIngredients" placeholder="Ingredients (one per line)" style="width:100%; min-height:70px; resize:vertical;"></textarea>' +
-      '<textarea class="add-input" id="mSteps" placeholder="Steps (one per line)" style="width:100%; min-height:90px; resize:vertical;"></textarea>' +
-      '<textarea class="add-input" id="mNote" placeholder="Mama\\'s notes — her exact words, quirks, the funny stuff" style="width:100%; min-height:60px; resize:vertical;"></textarea>' +
-      '<button class="add-btn-full mama" id="addMamaBtn">+ Add to Mama\\'s Kitchen</button></div>';
-    html += '</div>';
-    return html;
-  }
+function mamaHTML() {
+  let html = `<div class="section"><div class="section-header"><span class="section-label" style="color:var(--mama)">Mama's Kitchen</span><div class="section-line"></div><span class="section-count">${mamaRecipes.length}</span></div>`;
+  html += `<div class="insp-card" style="border-color:rgba(201,123,142,0.25); margin-bottom:14px;"><div class="insp-why" style="color:var(--text2);">A space just for her recipes — written in her words, exactly as she'd tell you. ❤️</div></div>`;
+  if (mamaRecipes.length === 0) html += `<div class="empty">No recipes added yet — start preserving her recipes here.</div>`;
+  mamaRecipes.forEach(r => html += recipeCardHTML(r, true));
+  html += `<div class="add-form" style="margin-top:14px; border-color:rgba(201,123,142,0.3);">
+    <input class="add-input" id="mTitle" placeholder="Recipe title" style="width:100%;">
+    <textarea class="add-input" id="mDesc" placeholder="Short description" style="width:100%; min-height:50px; resize:vertical;"></textarea>
+    <div class="add-row">
+      <input class="add-input" id="mTime" placeholder="Time (e.g. 1 hr)">
+      <input class="add-input" id="mServes" placeholder="Serves (e.g. 4)">
+    </div>
+    <textarea class="add-input" id="mIngredients" placeholder="Ingredients (one per line)" style="width:100%; min-height:70px; resize:vertical;"></textarea>
+    <textarea class="add-input" id="mSteps" placeholder="Steps (one per line)" style="width:100%; min-height:90px; resize:vertical;"></textarea>
+    <textarea class="add-input" id="mNote" placeholder="Mama's notes — her exact words, quirks, the funny stuff" style="width:100%; min-height:60px; resize:vertical;"></textarea>
+    <button class="add-btn-full mama" id="addMamaBtn">+ Add to Mama's Kitchen</button>
+  </div>`;
+  html += '</div>';
+  return html;
+}
 
-  function toolsHTML() {
-    let html = '<div class="section"><div class="section-header"><span class="section-label">My Tools</span><div class="section-line"></div><span class="section-count">' + tools.length + '</span></div>';
-    html += '<div class="tools-grid">';
-    tools.forEach(function(t, i) {
-      html += '<span class="tool-pill">' + t + '<button data-del-tool="' + i + '">×</button></span>';
-    });
-    html += '</div>';
-    html += '<div class="add-form" style="margin-top:16px;"><div class="add-row">' +
-      '<input class="add-input" id="toolName" placeholder="Add a tool (e.g. Air fryer, Dutch oven)">' +
-      '<button class="add-btn-full" style="flex:0 0 auto; padding:10px 20px;" id="addToolBtn">+ Add</button></div></div>';
-    html += '</div>';
-    return html;
-  }
+function toolsHTML() {
+  let html = `<div class="section"><div class="section-header"><span class="section-label">My Tools</span><div class="section-line"></div><span class="section-count">${tools.length}</span></div>`;
+  html += `<div class="tools-grid">`;
+  tools.forEach((t, i) => {
+    html += `<span class="tool-pill">${t}<button data-del-tool="${i}">×</button></span>`;
+  });
+  html += `</div>`;
+  html += `<div class="add-form" style="margin-top:14px;">
+    <div class="add-row">
+      <input class="add-input" id="toolName" placeholder="Add a tool (e.g. Air fryer, Dutch oven)">
+      <button class="add-btn-full" style="flex:0 0 auto; padding:10px 20px;" id="addToolBtn">+ Add</button>
+    </div>
+  </div>`;
+  html += '</div>';
+  return html;
+}
 
-  function render() {
-    let h = '';
-    if (currentView === 'today') h = todayHTML();
-    else if (currentView === 'kitchen') h = kitchenHTML();
-    else if (currentView === 'recipes') h = recipesHTML();
-    else if (currentView === 'mama') h = mamaHTML();
-    else h = toolsHTML();
-    document.getElementById('mainContent').innerHTML = h;
-    attachContentListeners();
-  }
+function recipeCardHTML(r, isMama) {
+  const sourceClass = r.source === 'mine' ? 'source-mine' : (r.source === 'mama' ? 'source-mama' : 'source-enzo');
+  const sourceLabel = r.source === 'mine' ? 'My Recipe' : (r.source === 'mama' ? "Mama's" : 'Enzo');
+  return `<div class="recipe-card ${isMama ? 'mama-card' : ''} ${r.expanded ? 'expanded' : ''}" data-recipe-id="${r.id}" data-is-mama="${isMama}">
+    <div class="recipe-top">
+      <div class="recipe-title">${r.title}</div>
+      <span class="recipe-source ${sourceClass}">${sourceLabel}</span>
+    </div>
+    <div class="recipe-desc">${r.desc}</div>
+    <div class="recipe-meta-row">
+      <span>⏱️ ${r.time}</span>
+      <span>🍽️ Serves ${r.serves}</span>
+    </div>
+    <div class="recipe-detail">
+      <div class="detail-section">
+        <div class="detail-label">Ingredients</div>
+        <ul class="ingredient-list">${(r.ingredients||[]).map(i => `<li>${i}</li>`).join('')}</ul>
+      </div>
+      <div class="detail-section">
+        <div class="detail-label">Steps</div>
+        <ol class="step-list">${(r.steps||[]).map(s => `<li>${s}</li>`).join('')}</ol>
+      </div>
+      ${r.mamaNote ? `<div class="mama-note"><b>In Mama's words:</b><br>${r.mamaNote}</div>` : ''}
+      <button class="del-recipe" data-del-recipe="${r.id}" data-del-mama="${isMama}">Remove recipe</button>
+    </div>
+  </div>`;
+}
 
-  function attachContentListeners() {
-    const addKitchenBtn = document.getElementById('addKitchenBtn');
-    if (addKitchenBtn) addKitchenBtn.addEventListener('click', addKitchenItem);
+function addKitchenItem() {
+  const name = document.getElementById('kName').value.trim();
+  if (!name) return;
+  kitchenItems.push({
+    id: 'k_' + Date.now(),
+    name: name,
+    loc: document.getElementById('kLoc').value,
+    expiry: document.getElementById('kExpiry').value.trim(),
+    flag: document.getElementById('kFlag').value
+  });
+  saveKitchen();
+  render();
+}
 
-    const addRecipeBtn = document.getElementById('addRecipeBtn');
-    if (addRecipeBtn) addRecipeBtn.addEventListener('click', addRecipe);
+function deleteKitchenItem(id) {
+  kitchenItems = kitchenItems.filter(i => i.id !== id);
+  saveKitchen();
+  render();
+}
 
-    const addMamaBtn = document.getElementById('addMamaBtn');
-    if (addMamaBtn) addMamaBtn.addEventListener('click', addMamaRecipe);
+function toggleRecipe(id, isMama) {
+  const list = isMama ? mamaRecipes : recipes;
+  const r = list.find(x => x.id === id);
+  if (r) r.expanded = !r.expanded;
+  isMama ? saveMama() : saveRecipes();
+  render();
+}
 
-    const addToolBtn = document.getElementById('addToolBtn');
-    if (addToolBtn) addToolBtn.addEventListener('click', addTool);
+function deleteRecipe(id, isMama) {
+  if (isMama) { mamaRecipes = mamaRecipes.filter(r => r.id !== id); saveMama(); }
+  else { recipes = recipes.filter(r => r.id !== id); saveRecipes(); }
+  render();
+}
 
-    document.querySelectorAll('[data-del-kitchen]').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        deleteKitchenItem(btn.getAttribute('data-del-kitchen'));
-      });
-    });
+function addRecipe() {
+  const title = document.getElementById('rTitle').value.trim();
+  if (!title) return;
+  recipes.push({
+    id: 'r_' + Date.now(),
+    title: title,
+    source: 'mine',
+    desc: document.getElementById('rDesc').value.trim(),
+    time: document.getElementById('rTime').value.trim() || '—',
+    serves: document.getElementById('rServes').value.trim() || '—',
+    ingredients: document.getElementById('rIngredients').value.split('\n').filter(x => x.trim()),
+    steps: document.getElementById('rSteps').value.split('\n').filter(x => x.trim()),
+    expanded: false
+  });
+  saveRecipes();
+  render();
+}
 
-    document.querySelectorAll('[data-del-tool]').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        deleteTool(parseInt(btn.getAttribute('data-del-tool'), 10));
-      });
-    });
+function addMamaRecipe() {
+  const title = document.getElementById('mTitle').value.trim();
+  if (!title) return;
+  mamaRecipes.push({
+    id: 'm_' + Date.now(),
+    title: title,
+    source: 'mama',
+    desc: document.getElementById('mDesc').value.trim(),
+    time: document.getElementById('mTime').value.trim() || '—',
+    serves: document.getElementById('mServes').value.trim() || '—',
+    ingredients: document.getElementById('mIngredients').value.split('\n').filter(x => x.trim()),
+    steps: document.getElementById('mSteps').value.split('\n').filter(x => x.trim()),
+    mamaNote: document.getElementById('mNote').value.trim(),
+    expanded: false
+  });
+  saveMama();
+  render();
+}
 
-    document.querySelectorAll('[data-del-recipe]').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        const isMama = btn.getAttribute('data-del-mama') === 'true';
-        deleteRecipe(btn.getAttribute('data-del-recipe'), isMama);
-      });
-    });
+function addTool() {
+  const v = document.getElementById('toolName').value.trim();
+  if (!v) return;
+  tools.push(v);
+  saveTools();
+  render();
+}
 
-    document.querySelectorAll('[data-recipe-id]').forEach(function(card) {
-      card.addEventListener('click', function() {
-        const id = card.getAttribute('data-recipe-id');
-        const isMama = card.getAttribute('data-is-mama') === 'true';
-        toggleRecipe(id, isMama);
-      });
-    });
-  }
+function deleteTool(i) {
+  tools.splice(i, 1);
+  saveTools();
+  render();
+}
 
-  function addKitchenItem() {
-    const nameEl = document.getElementById('kName');
-    const name = nameEl.value.trim();
-    if (!name) return;
-    kitchenItems.push({
-      id: 'k_' + Date.now(),
-      name: name,
-      loc: document.getElementById('kLoc').value,
-      expiry: document.getElementById('kExpiry').value.trim(),
-      flag: document.getElementById('kFlag').value
-    });
-    saveKitchen();
-    render();
-  }
-
-  function deleteKitchenItem(id) {
-    kitchenItems = kitchenItems.filter(function(i) { return i.id !== id; });
-    saveKitchen();
-    render();
-  }
-
-  function toggleRecipe(id, isMama) {
-    const list = isMama ? mamaRecipes : recipes;
-    const r = list.find(function(x) { return x.id === id; });
-    if (r) r.expanded = !r.expanded;
-    isMama ? saveMama() : saveRecipes();
-    render();
-  }
-
-  function deleteRecipe(id, isMama) {
-    if (isMama) { mamaRecipes = mamaRecipes.filter(function(r) { return r.id !== id; }); saveMama(); }
-    else { recipes = recipes.filter(function(r) { return r.id !== id; }); saveRecipes(); }
-    render();
-  }
-
-  function addRecipe() {
-    const title = document.getElementById('rTitle').value.trim();
-    if (!title) return;
-    recipes.push({
-      id: 'r_' + Date.now(),
-      title: title,
-      source: 'mine',
-      desc: document.getElementById('rDesc').value.trim(),
-      time: document.getElementById('rTime').value.trim() || '—',
-      serves: document.getElementById('rServes').value.trim() || '—',
-      ingredients: document.getElementById('rIngredients').value.split('\\n').filter(function(x) { return x.trim(); }),
-      steps: document.getElementById('rSteps').value.split('\\n').filter(function(x) { return x.trim(); }),
-      expanded: false
-    });
-    saveRecipes();
-    render();
-  }
-
-  function addMamaRecipe() {
-    const title = document.getElementById('mTitle').value.trim();
-    if (!title) return;
-    mamaRecipes.push({
-      id: 'm_' + Date.now(),
-      title: title,
-      source: 'mama',
-      desc: document.getElementById('mDesc').value.trim(),
-      time: document.getElementById('mTime').value.trim() || '—',
-      serves: document.getElementById('mServes').value.trim() || '—',
-      ingredients: document.getElementById('mIngredients').value.split('\\n').filter(function(x) { return x.trim(); }),
-      steps: document.getElementById('mSteps').value.split('\\n').filter(function(x) { return x.trim(); }),
-      mamaNote: document.getElementById('mNote').value.trim(),
-      expanded: false
-    });
-    saveMama();
-    render();
-  }
-
-  function addTool() {
-    const el = document.getElementById('toolName');
-    const v = el.value.trim();
-    if (!v) return;
-    tools.push(v);
-    saveTools();
-    render();
-  }
-
-  function deleteTool(i) {
-    tools.splice(i, 1);
-    saveTools();
-    render();
-  }
-
+function attachListeners() {
+  // View bar buttons
   document.getElementById('viewBar').addEventListener('click', function(e) {
     const btn = e.target.closest('.view-btn');
     if (!btn) return;
     currentView = btn.getAttribute('data-view');
-    document.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active', 'mama-active'); });
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active', 'mama-active'));
     if (currentView === 'mama') btn.classList.add('mama-active');
     else btn.classList.add('active');
     render();
   });
 
-  document.getElementById('greetingDisplay').textContent = (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening') + ' — what are we cooking today?';
+  // Kitchen item delete buttons
+  document.querySelectorAll('[data-del-kitchen]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteKitchenItem(btn.getAttribute('data-del-kitchen'));
+    });
+  });
 
-  render();
-})();
+  // Recipe cards and delete buttons
+  document.querySelectorAll('[data-recipe-id]').forEach(card => {
+    card.addEventListener('click', function() {
+      const id = this.getAttribute('data-recipe-id');
+      const isMama = this.getAttribute('data-is-mama') === 'true';
+      toggleRecipe(id, isMama);
+    });
+  });
+
+  document.querySelectorAll('[data-del-recipe]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const isMama = btn.getAttribute('data-del-mama') === 'true';
+      deleteRecipe(btn.getAttribute('data-del-recipe'), isMama);
+    });
+  });
+
+  // Tool delete buttons
+  document.querySelectorAll('[data-del-tool]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteTool(parseInt(btn.getAttribute('data-del-tool'), 10));
+    });
+  });
+
+  // Add buttons
+  const addKitchenBtn = document.getElementById('addKitchenBtn');
+  if (addKitchenBtn) addKitchenBtn.addEventListener('click', addKitchenItem);
+
+  const addRecipeBtn = document.getElementById('addRecipeBtn');
+  if (addRecipeBtn) addRecipeBtn.addEventListener('click', addRecipe);
+
+  const addMamaBtn = document.getElementById('addMamaBtn');
+  if (addMamaBtn) addMamaBtn.addEventListener('click', addMamaRecipe);
+
+  const addToolBtn = document.getElementById('addToolBtn');
+  if (addToolBtn) addToolBtn.addEventListener('click', addTool);
+
+  // Enter key on tool input
+  const toolName = document.getElementById('toolName');
+  if (toolName) {
+    toolName.addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTool();
+    });
+  }
+}
+
+function render() {
+  let html = '';
+  if (currentView === 'today') html = todayHTML();
+  else if (currentView === 'kitchen') html = kitchenHTML();
+  else if (currentView === 'recipes') html = recipesHTML();
+  else if (currentView === 'mama') html = mamaHTML();
+  else html = toolsHTML();
+  document.getElementById('mainContent').innerHTML = html;
+  attachListeners();
+}
+
+document.getElementById('greetingDisplay').textContent = (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening') + ' — what are we cooking today?';
+
+render();
 </script>
 </body>
 </html>
