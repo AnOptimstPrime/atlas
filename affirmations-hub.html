@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affirmations Hub — Marko</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0d0b1a; --surface: #161325; --surface2: #1f1a3a; --surface3: #281f4a;
+    --border: #322a52; --lamp: #e3b462; --lamp-deep: #c4923f; --aether: #8f7fd6;
+    --text: #f3eefa; --text2: #a89bc9; --text3: #685a8c;
+  }
+  body {
+    font-family: 'Inter', sans-serif; color: var(--text); min-height: 100vh;
+    background:
+      radial-gradient(ellipse 700px 500px at 85% -8%, rgba(143,127,214,0.16), transparent),
+      radial-gradient(ellipse 600px 420px at 5% 15%, rgba(227,180,98,0.07), transparent),
+      linear-gradient(180deg, #0e0c1c 0%, #0d0b1a 100%);
+    position: relative; overflow-x: hidden;
+  }
+  .serif { font-family: 'Cormorant Garamond', serif; }
+  #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .page-wrap { position: relative; z-index: 1; }
+
+  .header { padding: 26px 28px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-left h1 { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--lamp); margin-bottom: 6px; }
+  .title-row { display: flex; align-items: baseline; gap: 10px; }
+  .date { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 400; color: var(--text); letter-spacing: -0.02em; }
+  .greeting { font-size: 12px; color: var(--text2); margin-top: 6px; font-style: italic; }
+
+  .stats-bar { display: flex; gap: 10px; padding: 16px 28px 0; }
+  .stat-pill { flex: 1; padding: 12px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; text-align: center; }
+  .stat-pill .sv { font-family: 'DM Mono', monospace; font-size: 19px; font-weight: 500; color: var(--lamp); }
+  .stat-pill .sl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+
+  /* SAVA CARD */
+  .sava-card { margin: 16px 28px 0; padding: 16px 18px; background: linear-gradient(135deg, var(--surface), var(--surface2)); border: 1px solid var(--aether); border-radius: 14px; display: flex; gap: 14px; align-items: center; }
+  .sava-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--surface3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--lamp); }
+  .flame { transform-origin: 50% 100%; animation: flicker 2.4s ease-in-out infinite; }
+  @keyframes flicker { 0%,100% { opacity: 1; transform: scaleY(1) translateX(0); } 35% { opacity: 0.86; transform: scaleY(0.92) translateX(0.4px); } 60% { opacity: 0.95; transform: scaleY(1.05) translateX(-0.3px); } }
+  .sava-msg { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .sava-msg b { color: var(--lamp); font-weight: 600; }
+
+  .view-bar { display: flex; gap: 6px; padding: 18px 28px 0; }
+  .view-btn { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .view-btn.active { background: var(--aether); border-color: var(--aether); color: white; }
+  .view-btn:hover:not(.active) { border-color: var(--lamp); color: var(--text); }
+
+  .content { padding: 18px 28px 50px; max-height: calc(100vh - 280px); overflow-y: auto; }
+  .content::-webkit-scrollbar { width: 3px; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  .section { margin-bottom: 22px; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); white-space: nowrap; }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+  .section-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+
+  /* TODAY AFFIRMATION CARD */
+  .affirm-stage { position: relative; padding: 38px 28px; background: radial-gradient(ellipse 400px 260px at 50% 0%, rgba(227,180,98,0.10), transparent), var(--surface); border: 1px solid var(--lamp); border-radius: 18px; text-align: center; box-shadow: 0 0 40px rgba(227,180,98,0.06); }
+  .twinkle-deco { font-size: 14px; color: var(--lamp); opacity: 0.7; margin-bottom: 14px; letter-spacing: 0.3em; }
+  .affirm-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 27px; line-height: 1.45; color: var(--text); max-width: 480px; margin: 0 auto 18px; }
+  .affirm-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tag-tint, var(--aether)); margin-bottom: 22px; }
+  .affirm-btn { padding: 10px 24px; background: var(--lamp); border: none; border-radius: 10px; color: #1a1408; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .affirm-btn:hover { opacity: 0.88; }
+  .affirm-btn.done { background: var(--aether); color: #fff; }
+  .stage-actions { display: flex; gap: 10px; justify-content: center; margin-top: 22px; }
+  .ghost-btn { padding: 9px 16px; background: transparent; border: 1px solid var(--border); border-radius: 9px; color: var(--text2); font-size: 11.5px; font-weight: 500; cursor: pointer; }
+  .ghost-btn:hover { border-color: var(--aether); color: var(--text); }
+
+  .empty-card { padding: 32px 24px; background: var(--surface); border: 1.5px dashed var(--border); border-radius: 16px; text-align: center; }
+  .empty-title { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-style: italic; color: var(--text); margin-bottom: 8px; }
+  .empty-sub { font-size: 12.5px; color: var(--text2); line-height: 1.6; margin-bottom: 18px; max-width: 380px; margin-left: auto; margin-right: auto; }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .glance-chip { padding: 8px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; font-size: 11px; color: var(--text2); cursor: pointer; border-left: 3px solid var(--tint, var(--aether)); }
+  .glance-chip:hover { color: var(--text); border-color: var(--tint, var(--aether)); }
+
+  /* CATEGORY GRID */
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .cat-card { padding: 18px 16px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--tint, var(--aether)); border-radius: 12px; cursor: pointer; transition: all 0.15s; }
+  .cat-card:hover { background: var(--surface2); transform: translateY(-1px); }
+  .cat-icon { font-size: 19px; margin-bottom: 10px; display: block; }
+  .cat-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .cat-count { font-size: 10.5px; color: var(--text3); }
+  .cat-status { font-size: 9.5px; color: var(--tint, var(--aether)); margin-top: 6px; font-weight: 600; }
+
+  .back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; cursor: pointer; }
+  .back-row span { font-size: 12px; color: var(--text2); }
+  .back-row:hover span { color: var(--text); }
+  .cat-header-big { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .cat-header-big .ic { font-size: 24px; }
+  .cat-header-big .nm { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--text); }
+
+  .affirm-item { padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; }
+  .affirm-item-text { flex: 1; font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 16.5px; color: var(--text); line-height: 1.45; }
+  .item-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 15px; flex-shrink: 0; }
+  .item-del:hover { color: #c97456; }
+
+  .add-form { display: flex; flex-direction: column; gap: 9px; padding: 16px; background: var(--surface2); border: 1.5px dashed var(--border); border-radius: 14px; margin-top: 6px; }
+  .add-input, textarea.add-input { padding: 10px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12.5px; outline: none; resize: vertical; }
+  .add-input:focus { border-color: var(--lamp); }
+  .add-input::placeholder { color: var(--text3); }
+  .add-btn-full { padding: 11px; background: var(--lamp); border: none; border-radius: 10px; color: #1a1408; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+  .add-btn-full:hover { opacity: 0.88; }
+  .foundation-link { margin-top: 10px; font-size: 11.5px; color: var(--text3); }
+  .foundation-link a { color: var(--aether); cursor: pointer; font-weight: 600; }
+
+  /* FOUNDATIONS */
+  .progress-bar-track { height: 6px; background: var(--surface2); border-radius: 6px; overflow: hidden; margin-bottom: 6px; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--lamp), var(--aether)); border-radius: 6px; transition: width 0.3s; }
+  .progress-label { font-size: 11px; color: var(--text3); margin-bottom: 18px; }
+
+  .prompt-block { margin-bottom: 16px; }
+  .prompt-q { font-size: 12.5px; color: var(--text2); margin-bottom: 7px; line-height: 1.5; }
+  .prompt-q b { color: var(--lamp); }
+  .save-foundation-btn { padding: 11px; background: var(--aether); border: none; border-radius: 10px; color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 4px; }
+  .save-foundation-btn:hover { opacity: 0.88; }
+  .copy-sava-btn { padding: 11px; background: transparent; border: 1.5px solid var(--lamp); border-radius: 10px; color: var(--lamp); font-size: 12.5px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 8px; }
+  .copy-sava-btn:hover { background: rgba(227,180,98,0.1); }
+  .saved-note { font-size: 11px; color: var(--text3); margin-top: 8px; line-height: 1.5; text-align: center; }
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--lamp); color: #1a1408; padding: 10px 20px; border-radius: 20px; font-size: 12px; font-weight: 700; z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="page-wrap">
+
+<div class="header">
+  <div class="header-left">
+    <h1>Affirmations Hub</h1>
+    <div class="title-row"><span class="date" id="dateDisplay"></span></div>
+    <div class="greeting" id="greetingLine"></div>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-pill"><div class="sv" id="statStreak">0</div><div class="sl">Day Streak</div></div>
+  <div class="stat-pill"><div class="sv" id="statTotal">0</div><div class="sl">Affirmations</div></div>
+  <div class="stat-pill"><div class="sv" id="statFoundations">0/8</div><div class="sl">Foundations Laid</div></div>
+</div>
+
+<div class="sava-card">
+  <div class="sava-avatar">
+    <svg width="22" height="26" viewBox="0 0 22 26" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="11" cy="21" rx="8" ry="3.5" fill="none" stroke="#e3b462" stroke-width="1.3"/>
+      <path d="M5 21 Q4 14 11 13 Q18 14 17 21" fill="none" stroke="#e3b462" stroke-width="1.3"/>
+      <g class="flame">
+        <path d="M11 4 C8 8 8.5 11 11 13 C13.5 11 14 8 11 4Z" fill="#e3b462"/>
+        <path d="M11 7.5 C9.8 9.5 10 11 11 12 C12 11 12.2 9.5 11 7.5Z" fill="#fce6b8"/>
+      </g>
+    </svg>
+  </div>
+  <div class="sava-msg" id="savaMsg"></div>
+</div>
+
+<div class="view-bar">
+  <button class="view-btn active" id="vbToday" onclick="setView('today')">Today</button>
+  <button class="view-btn" id="vbCategories" onclick="setView('categories')">Categories</button>
+  <button class="view-btn" id="vbFoundations" onclick="setView('foundations')">Foundations</button>
+</div>
+
+<div class="content" id="mainContent"></div>
+<div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+(function() {
+
+const CATEGORIES = [
+  { id: 'body', name: 'Body & Discipline', icon: '🔥', tint: '#c97456', prompts: [
+    "What does discipline look like in your body on a day you don't feel motivated?",
+    "What's true about you as an athlete that doesn't go away when the season does?",
+    "Finish this: \"My body is not what I'm fighting against, it's...\""
+  ]},
+  { id: 'faith', name: 'Faith & Spirit', icon: '☦', tint: '#e3b462', prompts: [
+    "Who are you when no one's watching but God?",
+    "What's a truth about your faith you want to stop forgetting?",
+    "What does it mean for you to strive, rather than to arrive?"
+  ]},
+  { id: 'mindset', name: 'Mindset & Inner Voice', icon: '✨', tint: '#8f7fd6', prompts: [
+    "What does your inner voice sound like on your worst day — and what do you want it to sound like instead?",
+    "What's a lie about yourself you're ready to stop believing?",
+    "What's true about how you handle hard things, even when it doesn't feel like it?"
+  ]},
+  { id: 'relationships', name: 'Relationships & Love', icon: '💞', tint: '#c97b94', prompts: [
+    "Who are you trying to become for the people you love?",
+    "What kind of presence do you want to be in someone else's life?",
+    "What's one way you already show up well that you don't give yourself credit for?"
+  ]},
+  { id: 'family', name: 'Family', icon: '🏡', tint: '#d9a05c', prompts: [
+    "What did your family give you that you want to carry forward?",
+    "What kind of son — and someday, what kind of father — are you becoming?",
+    "What does honoring where you come from look like in your daily life?"
+  ]},
+  { id: 'career', name: 'Career & Purpose', icon: '🎯', tint: '#6f93c4', prompts: [
+    "What kind of leader are you becoming at Momentum, beyond the title?",
+    "What does work ethic mean to you — not as a virtue you perform, but as who you are?",
+    "What do you want to be true about your career ten years from now?"
+  ]},
+  { id: 'growth', name: 'Growth & Becoming', icon: '🌱', tint: '#7fa87a', prompts: [
+    "What's something you used to believe about your limits that you've already outgrown?",
+    "What does it look like to be a beginner again — in Korean, in life — and stay in it?",
+    "What's the long-game version of you that today's small effort is building?"
+  ]},
+  { id: 'habits', name: 'Daily Habits', icon: '🔁', tint: '#9089b0', prompts: [
+    "What do your small daily actions say about who you actually are, not who you say you are?",
+    "What's a habit that feels small but you know is actually foundational?",
+    "Finish this: \"Showing up today, even imperfectly, means...\""
+  ]}
+];
+
+const SAVA_LINES = [
+  "Identity isn't a finish line you cross — it's a lamp you keep lit. Light it again today.",
+  "You don't need a new self today, Marko. You need to remember the one you already are.",
+  "Small, daily turns toward who you're becoming are their own kind of discipline. Today is one more turn.",
+  "Before you reach for the world today, sit a moment in your own stillness. Then go.",
+  "Discipline without identity is just willpower. Let's root today's effort in who you actually are.",
+  "Every \"I am\" you speak today shapes the one you'll be tomorrow. Choose them carefully.",
+  "You're further along than you give yourself credit for. Keep going.",
+  "Who you are on your hardest day is still who you are. Don't forget that."
+];
+
+const GREETINGS = ["Hey, Marko.", "Hi, Marko.", "Zdravo, Marko.", "Ćao, Marko."];
+
+const todayDate = new Date();
+const todayKey = todayDate.toISOString().split('T')[0];
+function dateSeed(str) { let h = 0; for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) >>> 0; } return h; }
+
+let currentView = 'today';
+let expandedCategory = null;
+let expandedFoundation = null;
+
+// ---- storage ----
+function loadItems() { try { return JSON.parse(localStorage.getItem('atlas_affirm_items')) || []; } catch(e) { return []; } }
+function saveItems(items) { localStorage.setItem('atlas_affirm_items', JSON.stringify(items)); }
+function loadFoundations() { try { return JSON.parse(localStorage.getItem('atlas_affirm_foundations')) || {}; } catch(e) { return {}; } }
+function saveFoundations(f) { localStorage.setItem('atlas_affirm_foundations', JSON.stringify(f)); }
+function loadStreak() { try { return JSON.parse(localStorage.getItem('atlas_affirm_streak')) || { count: 0, lastSpoken: null }; } catch(e) { return { count: 0, lastSpoken: null }; } }
+function saveStreak(s) { localStorage.setItem('atlas_affirm_streak', JSON.stringify(s)); }
+function loadTodayPick() { try { return JSON.parse(localStorage.getItem('atlas_affirm_todayPick')); } catch(e) { return null; } }
+function saveTodayPick(p) { localStorage.setItem('atlas_affirm_todayPick', JSON.stringify(p)); }
+
+let items = loadItems();
+let foundations = loadFoundations();
+let streak = loadStreak();
+
+function catById(id) { return CATEGORIES.find(c => c.id === id); }
+
+// ---- today pick ----
+function getTodayPick() {
+  if (items.length === 0) return null;
+  let pick = loadTodayPick();
+  if (pick && pick.date === todayKey && items.find(i => i.id === pick.itemId)) {
+    return items.find(i => i.id === pick.itemId);
+  }
+  const idx = dateSeed(todayKey) % items.length;
+  const chosen = items[idx];
+  saveTodayPick({ date: todayKey, itemId: chosen.id });
+  return chosen;
+}
+
+function drawAnother() {
+  if (items.length <= 1) return;
+  const current = loadTodayPick();
+  let pool = items.filter(i => !current || i.id !== current.itemId);
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+  saveTodayPick({ date: todayKey, itemId: chosen.id });
+  render();
+}
+
+function markSpoken() {
+  const y = new Date(todayDate); y.setDate(y.getDate() - 1);
+  const yKey = y.toISOString().split('T')[0];
+  if (streak.lastSpoken === todayKey) { /* already counted */ }
+  else if (streak.lastSpoken === yKey) { streak.count += 1; streak.lastSpoken = todayKey; }
+  else { streak.count = 1; streak.lastSpoken = todayKey; }
+  saveStreak(streak);
+  render();
+}
+
+// ---- views ----
+function setView(v) {
+  currentView = v;
+  expandedCategory = null;
+  expandedFoundation = null;
+  document.querySelectorAll('.view-btn').forEach((b,i) => b.classList.toggle('active', ['today','categories','foundations'][i] === v));
+  render();
+}
+
+function todayHTML() {
+  const spokenToday = streak.lastSpoken === todayKey;
+  if (items.length === 0) {
+    return `
+    <div class="empty-card">
+      <div class="empty-title">Your lamp isn't lit yet.</div>
+      <div class="empty-sub">You haven't approved any affirmations across your eight foundations. Start with whichever one calls to you — Faith, Body, Mindset, wherever feels true today.</div>
+      <button class="affirm-btn" onclick="setView('foundations')">Start Your Foundations</button>
+    </div>`;
+  }
+  const pick = getTodayPick();
+  const cat = catById(pick.categoryId);
+  let h = `
+    <div class="affirm-stage" style="--tag-tint:${cat.tint}">
+      <div class="twinkle-deco">✦ ✦ ✦</div>
+      <div class="affirm-text">"${pick.text}"</div>
+      <div class="affirm-tag">${cat.icon} ${cat.name}</div>
+      <button class="affirm-btn ${spokenToday ? 'done' : ''}" onclick="markSpoken()">${spokenToday ? '✓ Spoken Today' : 'I Spoke This Today'}</button>
+      <div class="stage-actions">
+        <button class="ghost-btn" onclick="drawAnother()">Draw Another</button>
+        <button class="ghost-btn" onclick="setView('categories')">Browse by Category</button>
+      </div>
+    </div>`;
+
+  const glanceItems = CATEGORIES.map(c => {
+    const inCat = items.filter(i => i.categoryId === c.id);
+    if (inCat.length === 0) return null;
+    return { cat: c, item: inCat[dateSeed(todayKey + c.id) % inCat.length] };
+  }).filter(Boolean);
+
+  if (glanceItems.length > 1) {
+    h += `
+    <div class="section" style="margin-top:22px">
+      <div class="section-header"><span class="section-label">Also Today</span><div class="section-line"></div></div>
+      <div class="chip-row">
+        ${glanceItems.map(g => `<span class="glance-chip" style="--tint:${g.cat.tint}" onclick="jumpToCategory('${g.cat.id}')">${g.cat.icon} ${g.cat.name}</span>`).join('')}
+      </div>
+    </div>`;
+  }
+  return h;
+}
+
+function jumpToCategory(id) {
+  currentView = 'categories';
+  expandedCategory = id;
+  document.querySelectorAll('.view-btn').forEach((b,i) => b.classList.toggle('active', ['today','categories','foundations'][i] === 'categories'));
+  render();
+}
+
+function categoriesHTML() {
+  if (expandedCategory) {
+    const cat = catById(expandedCategory);
+    const catItems = items.filter(i => i.categoryId === cat.id);
+    let h = `
+    <div class="back-row" onclick="expandedCategory=null;render()"><span>← All Categories</span></div>
+    <div class="cat-header-big"><span class="ic">${cat.icon}</span><span class="nm">${cat.name}</span></div>`;
+    if (catItems.length === 0) {
+      h += `<div class="empty-card" style="margin-bottom:14px"><div class="empty-sub" style="margin-bottom:0">No affirmations approved here yet.</div></div>`;
+    } else {
+      catItems.forEach(it => {
+        h += `<div class="affirm-item"><div class="affirm-item-text">"${it.text}"</div><button class="item-del" onclick="deleteItem('${it.id}')">×</button></div>`;
+      });
+    }
+    h += `
+    <div class="add-form">
+      <textarea class="add-input" id="newAffirmText" rows="2" placeholder="Write or paste an approved affirmation for this category..."></textarea>
+      <button class="add-btn-full" onclick="addItem('${cat.id}')">+ Add to ${cat.name}</button>
+      <div class="foundation-link">Need help finding the words? <a onclick="jumpToFoundation('${cat.id}')">Open this category's Foundations questionnaire</a>, then take your answers to Sava.</div>
+    </div>`;
+    return h;
+  }
+
+  let h = `<div class="cat-grid">`;
+  CATEGORIES.forEach(c => {
+    const count = items.filter(i => i.categoryId === c.id).length;
+    h += `
+    <div class="cat-card" style="--tint:${c.tint}" onclick="expandedCategory='${c.id}';render()">
+      <span class="cat-icon">${c.icon}</span>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-count">${count} affirmation${count === 1 ? '' : 's'}</div>
+    </div>`;
+  });
+  h += `</div>`;
+  return h;
+}
+
+function jumpToFoundation(id) {
+  currentView = 'foundations';
+  expandedFoundation = id;
+  document.querySelectorAll('.view-btn').forEach((b,i) => b.classList.toggle('active', ['today','categories','foundations'][i] === 'foundations'));
+  render();
+}
+
+function foundationsHTML() {
+  const laidCount = CATEGORIES.filter(c => foundations[c.id] && foundations[c.id].savedAt).length;
+
+  if (expandedFoundation) {
+    const cat = catById(expandedFoundation);
+    const existing = foundations[cat.id] || { answers: ['', '', ''] };
+    let h = `
+    <div class="back-row" onclick="expandedFoundation=null;render()"><span>← All Foundations</span></div>
+    <div class="cat-header-big"><span class="ic">${cat.icon}</span><span class="nm">${cat.name}</span></div>`;
+    cat.prompts.forEach((p, i) => {
+      h += `
+      <div class="prompt-block">
+        <div class="prompt-q"><b>${i+1}.</b> ${p}</div>
+        <textarea class="add-input" rows="3" id="fAnswer${i}" placeholder="Your answer...">${(existing.answers[i] || '').replace(/</g,'&lt;')}</textarea>
+      </div>`;
+    });
+    h += `<button class="save-foundation-btn" onclick="saveFoundationAnswers('${cat.id}')">Save My Answers</button>`;
+    if (existing.savedAt) {
+      h += `<button class="copy-sava-btn" onclick="copyForSava('${cat.id}')">🕯 Copy for Sava</button>
+      <div class="saved-note">Saved ${new Date(existing.savedAt).toLocaleDateString()}. Take these answers to your conversation with Sava — once you've approved what comes out of it, add the final affirmations in Categories.</div>`;
+    } else {
+      h += `<div class="saved-note">Save your answers first, then copy them to bring into a conversation with Sava.</div>`;
+    }
+    return h;
+  }
+
+  let h = `
+  <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${(laidCount/8)*100}%"></div></div>
+  <div class="progress-label">${laidCount} of 8 foundations laid</div>
+  <div class="cat-grid">`;
+  CATEGORIES.forEach(c => {
+    const f = foundations[c.id];
+    const status = f && f.savedAt ? 'Answered' : 'Not started';
+    h += `
+    <div class="cat-card" style="--tint:${c.tint}" onclick="expandedFoundation='${c.id}';render()">
+      <span class="cat-icon">${c.icon}</span>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-status">${status}</div>
+    </div>`;
+  });
+  h += `</div>`;
+  return h;
+}
+
+function saveFoundationAnswers(catId) {
+  const answers = [0,1,2].map(i => document.getElementById('fAnswer' + i).value.trim());
+  foundations[catId] = { answers, savedAt: new Date().toISOString() };
+  saveFoundations(foundations);
+  showToast('Answers saved');
+  render();
+}
+
+function copyForSava(catId) {
+  const cat = catById(catId);
+  const f = foundations[catId];
+  let text = `Foundations — ${cat.name}\n\n`;
+  cat.prompts.forEach((p, i) => { text += `${p}\n${f.answers[i] || '(no answer)'}\n\n`; });
+  navigator.clipboard.writeText(text).then(() => showToast('Copied — paste this into your conversation with Sava'));
+}
+
+function addItem(catId) {
+  const text = document.getElementById('newAffirmText').value.trim();
+  if (!text) return;
+  items.push({ id: 'a_' + Date.now(), categoryId: catId, text, createdAt: new Date().toISOString() });
+  saveItems(items);
+  render();
+}
+
+function deleteItem(id) {
+  items = items.filter(i => i.id !== id);
+  saveItems(items);
+  render();
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function updateStats() {
+  document.getElementById('statStreak').textContent = streak.lastSpoken === todayKey || isStreakAlive() ? streak.count : streak.count;
+  document.getElementById('statTotal').textContent = items.length;
+  const laidCount = CATEGORIES.filter(c => foundations[c.id] && foundations[c.id].savedAt).length;
+  document.getElementById('statFoundations').textContent = laidCount + '/8';
+}
+
+function isStreakAlive() {
+  if (!streak.lastSpoken) return false;
+  const y = new Date(todayDate); y.setDate(y.getDate() - 1);
+  const yKey = y.toISOString().split('T')[0];
+  return streak.lastSpoken === todayKey || streak.lastSpoken === yKey;
+}
+
+function render() {
+  let h = '';
+  if (currentView === 'today') h = todayHTML();
+  else if (currentView === 'categories') h = categoriesHTML();
+  else h = foundationsHTML();
+  document.getElementById('mainContent').innerHTML = h;
+  updateStats();
+}
+
+window.setView = setView;
+window.drawAnother = drawAnother;
+window.markSpoken = markSpoken;
+window.jumpToCategory = jumpToCategory;
+window.jumpToFoundation = jumpToFoundation;
+window.saveFoundationAnswers = saveFoundationAnswers;
+window.copyForSava = copyForSava;
+window.addItem = addItem;
+window.deleteItem = deleteItem;
+window.expandedCategory = null;
+window.expandedFoundation = null;
+
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+document.getElementById('dateDisplay').textContent = `${days[todayDate.getDay()]}, ${months[todayDate.getMonth()]} ${todayDate.getDate()}`;
+document.getElementById('greetingLine').textContent = GREETINGS[dateSeed(todayKey + 'greet') % GREETINGS.length];
+document.getElementById('savaMsg').innerHTML = `<b>Sava:</b> ${SAVA_LINES[dateSeed(todayKey) % SAVA_LINES.length]}`;
+
+render();
+
+// ---- ambient starfield (restrained: quiet twinkle only) ----
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let w, h, stars = [], t = 0;
+function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+for (let i = 0; i < 90; i++) {
+  stars.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.2 + 0.3, baseAlpha: Math.random() * 0.5 + 0.15, phase: Math.random() * Math.PI * 2, speed: Math.random() * 0.012 + 0.004, gold: Math.random() < 0.18 });
+}
+function draw() {
+  ctx.clearRect(0, 0, w, h);
+  stars.forEach(s => {
+    const twinkle = Math.sin(t * s.speed + s.phase) * 0.4 + 0.7;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = s.gold ? `rgba(227,180,98,${s.baseAlpha * twinkle})` : `rgba(243,238,250,${s.baseAlpha * twinkle})`;
+    ctx.fill();
+  });
+  t += 1;
+  requestAnimationFrame(draw);
+}
+draw();
+
+})();
+</script>
+</body>
+</html>
