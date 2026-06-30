@@ -334,6 +334,11 @@ function todayHTML() {
   return h;
 }
 
+function openCategory(id) { expandedCategory = id; render(); }
+function closeCategory() { expandedCategory = null; render(); }
+function openFoundation(id) { expandedFoundation = id; render(); }
+function closeFoundation() { expandedFoundation = null; render(); }
+
 function jumpToCategory(id) {
   currentView = 'categories';
   expandedCategory = id;
@@ -346,7 +351,7 @@ function categoriesHTML() {
     const cat = catById(expandedCategory);
     const catItems = items.filter(i => i.categoryId === cat.id);
     let h = `
-    <div class="back-row" onclick="expandedCategory=null;render()"><span>← All Categories</span></div>
+    <div class="back-row" onclick="closeCategory()"><span>← All Categories</span></div>
     <div class="cat-header-big"><span class="ic">${cat.icon}</span><span class="nm">${cat.name}</span></div>`;
     if (catItems.length === 0) {
       h += `<div class="empty-card" style="margin-bottom:14px"><div class="empty-sub" style="margin-bottom:0">No affirmations approved here yet.</div></div>`;
@@ -368,7 +373,7 @@ function categoriesHTML() {
   CATEGORIES.forEach(c => {
     const count = items.filter(i => i.categoryId === c.id).length;
     h += `
-    <div class="cat-card" style="--tint:${c.tint}" onclick="expandedCategory='${c.id}';render()">
+    <div class="cat-card" style="--tint:${c.tint}" onclick="openCategory('${c.id}')">
       <span class="cat-icon">${c.icon}</span>
       <div class="cat-name">${c.name}</div>
       <div class="cat-count">${count} affirmation${count === 1 ? '' : 's'}</div>
@@ -392,7 +397,7 @@ function foundationsHTML() {
     const cat = catById(expandedFoundation);
     const existing = foundations[cat.id] || { answers: ['', '', ''] };
     let h = `
-    <div class="back-row" onclick="expandedFoundation=null;render()"><span>← All Foundations</span></div>
+    <div class="back-row" onclick="closeFoundation()"><span>← All Foundations</span></div>
     <div class="cat-header-big"><span class="ic">${cat.icon}</span><span class="nm">${cat.name}</span></div>`;
     cat.prompts.forEach((p, i) => {
       h += `
@@ -419,7 +424,7 @@ function foundationsHTML() {
     const f = foundations[c.id];
     const status = f && f.savedAt ? 'Answered' : 'Not started';
     h += `
-    <div class="cat-card" style="--tint:${c.tint}" onclick="expandedFoundation='${c.id}';render()">
+    <div class="cat-card" style="--tint:${c.tint}" onclick="openFoundation('${c.id}')">
       <span class="cat-icon">${c.icon}</span>
       <div class="cat-name">${c.name}</div>
       <div class="cat-status">${status}</div>
@@ -496,12 +501,14 @@ window.drawAnother = drawAnother;
 window.markSpoken = markSpoken;
 window.jumpToCategory = jumpToCategory;
 window.jumpToFoundation = jumpToFoundation;
+window.openCategory = openCategory;
+window.closeCategory = closeCategory;
+window.openFoundation = openFoundation;
+window.closeFoundation = closeFoundation;
 window.saveFoundationAnswers = saveFoundationAnswers;
 window.copyForSava = copyForSava;
 window.addItem = addItem;
 window.deleteItem = deleteItem;
-window.expandedCategory = null;
-window.expandedFoundation = null;
 
 const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
