@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korean Hub — Marko</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a24; --surface3: #22222f;
+    --border: #2a2a3a; --primary-red: #e63946; --secondary-blue: #0066cc;
+    --text: #f0f0f8; --text2: #9090a8; --text3: #5a5a72;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .kr { font-family: 'Noto Sans KR', sans-serif; }
+
+  .header { padding: 22px 28px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-left h1 { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--primary-red); margin-bottom: 5px; }
+  .title-row { display: flex; align-items: baseline; gap: 10px; }
+  .date { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 400; color: var(--text); letter-spacing: -0.02em; }
+  .greeting { font-size: 12px; color: var(--text2); margin-top: 5px; }
+  .header-right { text-align: right; }
+  .milestone-badge { padding: 6px 14px; background: linear-gradient(135deg, rgba(230,57,70,0.15), rgba(0,102,204,0.1)); border: 1px solid rgba(230,57,70,0.3); border-radius: 20px; font-size: 11px; font-weight: 600; color: var(--secondary-blue); }
+
+  .stats-bar { display: flex; gap: 10px; padding: 16px 28px 0; }
+  .stat-pill { flex: 1; padding: 12px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; text-align: center; }
+  .stat-pill.accent { border-color: var(--primary-red); }
+  .stat-pill.accent-blue { border-color: var(--secondary-blue); }
+  .stat-pill .sv { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 500; color: var(--text); }
+  .stat-pill.accent .sv { color: var(--primary-red); }
+  .stat-pill.accent-blue .sv { color: var(--secondary-blue); }
+  .stat-pill .sl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+  .stat-pill.streak .sv { color: var(--primary-red); }
+
+  /* TUTOR CARD */
+  .tutor-card { margin: 16px 28px 0; padding: 16px; background: linear-gradient(135deg, var(--surface), var(--surface2)); border: 1px solid var(--secondary-blue); border-radius: 14px; display: flex; gap: 14px; align-items: center; }
+  .tutor-avatar { width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-red), var(--secondary-blue)); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .tutor-msg { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .tutor-msg b { color: var(--text); font-weight: 600; }
+
+  .view-bar { display: flex; gap: 6px; padding: 18px 28px 0; }
+  .view-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .view-btn.active { background: var(--primary-red); border-color: var(--primary-red); color: white; }
+  .view-btn:hover:not(.active) { border-color: var(--secondary-blue); color: var(--text); }
+
+  .content { padding: 16px 28px 40px; max-height: calc(100vh - 290px); overflow-y: auto; }
+  .content::-webkit-scrollbar { width: 3px; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  .section { margin-bottom: 22px; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); white-space: nowrap; }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+  .section-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+
+  /* PHRASE OF DAY */
+  .potd-card { padding: 22px; background: var(--surface); border: 1.5px solid var(--primary-red); border-radius: 14px; text-align: center; }
+  .potd-hangul { font-size: 30px; font-weight: 700; margin-bottom: 6px; }
+  .potd-romanization { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--secondary-blue); margin-bottom: 10px; }
+  .potd-english { font-size: 15px; color: var(--text); margin-bottom: 12px; }
+  .potd-context { font-size: 12px; color: var(--text3); padding-top: 12px; border-top: 1px solid var(--border); line-height: 1.5; }
+  .potd-btn { margin-top: 14px; padding: 8px 18px; background: var(--primary-red); border: none; border-radius: 8px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .potd-btn:hover { opacity: 0.85; }
+  .potd-btn.learned { background: var(--secondary-blue); }
+
+  /* FLASHCARD */
+  .flash-card { padding: 26px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; text-align: center; cursor: pointer; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: border-color 0.15s; }
+  .flash-card:hover { border-color: var(--primary-red); }
+  .flash-front { font-size: 26px; font-weight: 700; }
+  .flash-back { display: none; }
+  .flash-card.flipped .flash-front { display: none; }
+  .flash-card.flipped .flash-back { display: block; }
+  .flash-back .fb-rom { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--secondary-blue); margin-bottom: 6px; }
+  .flash-back .fb-eng { font-size: 16px; color: var(--text); }
+  .flash-hint { font-size: 10px; color: var(--text3); margin-top: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .flash-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: center; }
+  .flash-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600; cursor: pointer; }
+  .flash-btn.know { border-color: var(--secondary-blue); color: var(--secondary-blue); }
+  .flash-btn.shaky { border-color: var(--primary-red); color: var(--primary-red); }
+  .flash-btn:hover { opacity: 0.8; }
+  .flash-progress { text-align: center; font-size: 11px; color: var(--text3); margin-bottom: 12px; }
+  .flash-empty { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
+
+  /* VOCAB LOG */
+  .vocab-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; margin-bottom: 6px; }
+  .vocab-main { flex: 1; min-width: 0; }
+  .vocab-hangul { font-size: 16px; font-weight: 600; }
+  .vocab-rom { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--secondary-blue); margin-top: 2px; }
+  .vocab-eng { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .vocab-status { font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 12px; flex-shrink: 0; }
+  .status-new { background: rgba(0,102,204,0.15); color: var(--secondary-blue); }
+  .status-shaky { background: rgba(230,57,70,0.15); color: var(--primary-red); }
+  .status-known { background: rgba(0,102,204,0.15); color: var(--secondary-blue); }
+  .vocab-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; flex-shrink: 0; }
+  .vocab-del:hover { color: var(--primary-red); }
+
+  /* ADD VOCAB FORM */
+  .add-vocab { display: flex; flex-direction: column; gap: 8px; padding: 14px; background: var(--surface); border: 1px dashed var(--border); border-radius: 10px; }
+  .add-row { display: flex; gap: 8px; }
+  .add-input { flex: 1; padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; outline: none; }
+  .add-input.kr-input { font-family: 'Noto Sans KR', sans-serif; }
+  .add-input:focus { border-color: var(--primary-red); }
+  .add-input::placeholder { color: var(--text3); }
+  .add-btn-full { padding: 10px; background: var(--primary-red); border: none; border-radius: 8px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .add-btn-full:hover { opacity: 0.85; }
+
+  /* STUDY LOG */
+  .study-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; }
+  .study-label { font-size: 13px; flex: 1; }
+  .study-input { width: 70px; padding: 5px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; text-align: center; outline: none; }
+  .study-input:focus { border-color: var(--primary-red); }
+  .study-confirm-btn { padding: 9px 16px; background: var(--primary-red); border: none; border-radius: 8px; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .study-confirm-btn.done { background: var(--secondary-blue); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Korean Hub</h1>
+    <div class="title-row"><span class="date" id="dateDisplay"></span></div>
+    <div class="greeting" id="greetingDisplay">안녕하세요, Marko! 화이팅! 💪</div>
+  </div>
+  <div class="header-right">
+    <div class="milestone-badge" id="milestoneBadge">Getting Started</div>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-pill accent"><div class="sv" id="statWords">0</div><div class="sl">Words Logged</div></div>
+  <div class="stat-pill accent-blue"><div class="sv" id="statKnown">0</div><div class="sl">Mastered</div></div>
+  <div class="stat-pill streak accent"><div class="sv" id="statStreak">🔥 0</div><div class="sl">Day Streak</div></div>
+</div>
+
+<div class="tutor-card">
+  <div class="tutor-avatar">🌸</div>
+  <div class="tutor-msg" id="tutorMsg"><b>Hana 선생님:</b> Ready for a little practice today? Even 5 minutes counts — let's go!</div>
+</div>
+
+<div class="view-bar">
+  <button class="view-btn active" onclick="setView('today')">Today</button>
+  <button class="view-btn" onclick="setView('review')">Review</button>
+  <button class="view-btn" onclick="setView('vocab')">My Vocab Bank</button>
+</div>
+
+<div class="content" id="mainContent"></div>
+
+<script>
+const today = new Date();
+const todayKey = today.toISOString().split('T')[0];
+const hour = today.getHours();
+
+let vocabBank = JSON.parse(localStorage.getItem('kh_vocab') || 'null') || [
+  { id: 'seed1', hangul: '안녕하세요', rom: 'annyeonghaseyo', eng: 'Hello (polite)', status: 'new', nextReview: todayKey },
+  { id: 'seed2', hangul: '감사합니다', rom: 'gamsahamnida', eng: 'Thank you (polite)', status: 'new', nextReview: todayKey },
+  { id: 'seed3', hangul: '죄송합니다', rom: 'joesonghamnida', eng: "I'm sorry (polite)", status: 'new', nextReview: todayKey },
+  { id: 'seed4', hangul: '할머니', rom: 'halmeoni', eng: 'Grandmother', status: 'new', nextReview: todayKey },
+  { id: 'seed5', hangul: '저는 마르코예요', rom: 'jeoneun Marko-yeyo', eng: 'I am Marko', status: 'new', nextReview: todayKey },
+  { id: 'seed6', hangul: '네 / 아니요', rom: 'ne / aniyo', eng: 'Yes / No', status: 'new', nextReview: todayKey },
+  { id: 'seed7', hangul: '맛있어요', rom: 'masisseoyo', eng: "It's delicious", status: 'new', nextReview: todayKey },
+  { id: 'seed8', hangul: '괜찮아요', rom: 'gwaenchanayo', eng: "It's okay / I'm fine", status: 'new', nextReview: todayKey },
+];
+let studiedToday = JSON.parse(localStorage.getItem('kh_studied_' + todayKey) || 'false');
+let minutesToday = localStorage.getItem('kh_minutes_' + todayKey) || '';
+let currentView = 'today';
+let flashIndex = 0;
+let flashFlipped = false;
+
+const phrasesOfDay = [
+  { hangul: '오랜만이에요', rom: 'oraenmanieyo', eng: 'Long time no see', context: "Use this when greeting someone you haven't seen in a while — perfect for visiting family." },
+  { hangul: '천천히 말해 주세요', rom: 'cheoncheonhi malhae juseyo', eng: 'Please speak slowly', context: 'Incredibly useful as a beginner — politely ask someone to slow down.' },
+  { hangul: '이거 뭐예요?', rom: 'igeo mwoyeyo?', eng: 'What is this?', context: 'Great all-purpose question for pointing at food, objects, anything.' },
+  { hangul: '잘 먹겠습니다', rom: 'jal meokgesseumnida', eng: '(Said before eating, like "I will eat well")', context: 'A beautiful, common phrase said before meals — shows respect and gratitude.' },
+  { hangul: '수고하셨어요', rom: 'sugohasyeosseoyo', eng: 'Thank you for your hard work', context: 'Said at the end of a long day or after someone helps you — very commonly used.' },
+  { hangul: '보고 싶었어요', rom: 'bogo sipeosseoyo', eng: 'I missed you', context: 'Warm, personal phrase — great for family members.' },
+  { hangul: '건강하세요', rom: 'geonganghaseyo', eng: 'Stay healthy / Be well', context: 'A common, caring thing to say to elders, especially grandparents.' },
+];
+
+function getDayIndex(arr) {
+  const start = new Date('2026-06-01');
+  const diff = Math.floor((today - start) / 86400000);
+  return ((diff % arr.length) + arr.length) % arr.length;
+}
+
+function getMilestone() {
+  const known = vocabBank.filter(v => v.status === 'known').length;
+  const total = vocabBank.length;
+  if (total < 5) return 'Just Starting';
+  if (known < 5) return 'Getting Started';
+  if (known < 20) return 'Basic Conversational';
+  if (known < 50) return 'Comfortable';
+  return 'Conversational+';
+}
+
+function saveVocab() { localStorage.setItem('kh_vocab', JSON.stringify(vocabBank)); }
+
+function updateStats() {
+  document.getElementById('statWords').textContent = vocabBank.length;
+  document.getElementById('statKnown').textContent = vocabBank.filter(v => v.status === 'known').length;
+  document.getElementById('milestoneBadge').textContent = getMilestone();
+
+  if (studiedToday && !localStorage.getItem('kh_had_' + todayKey)) {
+    const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+    const yk = yest.toISOString().split('T')[0];
+    const hadYest = localStorage.getItem('kh_had_' + yk);
+    const prev = parseInt(localStorage.getItem('kh_streak') || '0');
+    localStorage.setItem('kh_streak', hadYest ? prev + 1 : 1);
+    localStorage.setItem('kh_had_' + todayKey, '1');
+  }
+  document.getElementById('statStreak').textContent = '🔥 ' + (localStorage.getItem('kh_streak') || '0');
+
+  const msgs = [
+    "Ready for a little practice today? Even 5 minutes counts — let's go!",
+    'Every word you learn brings you closer to talking with halmeoni. 화이팅!',
+    "No pressure, just progress. Let's review a few words!",
+    "You're doing great — consistency beats perfection every time."
+  ];
+  document.getElementById('tutorMsg').innerHTML = '<b>Hana 선생님:</b> ' + msgs[getDayIndex(msgs)];
+}
+
+function markStudied() {
+  studiedToday = true;
+  localStorage.setItem('kh_studied_' + todayKey, 'true');
+  minutesToday = document.getElementById('minutesInput')?.value || minutesToday;
+  localStorage.setItem('kh_minutes_' + todayKey, minutesToday);
+  render();
+}
+
+function todayHTML() {
+  const potd = phrasesOfDay[getDayIndex(phrasesOfDay)];
+  return `
+    <div class="section">
+      <div class="section-header"><span class="section-label">Phrase of the Day</span><div class="section-line"></div></div>
+      <div class="potd-card">
+        <div class="potd-hangul kr">${potd.hangul}</div>
+        <div class="potd-romanization">${potd.rom}</div>
+        <div class="potd-english">"${potd.eng}"</div>
+        <div class="potd-context">${potd.context}</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header"><span class="section-label">Today's Study Log</span><div class="section-line"></div></div>
+      <div class="study-row">
+        <span class="study-label">⏱️ Minutes studied (TTMIK or here)</span>
+        <input class="study-input" id="minutesInput" placeholder="15" value="${minutesToday}">
+        <button class="study-confirm-btn ${studiedToday ? 'done' : ''}" onclick="markStudied()">${studiedToday ? '✓ Logged' : 'Confirm Studied'}</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-header"><span class="section-label">Log New Words</span><div class="section-line"></div></div>
+      <div class="add-vocab">
+        <div class="add-row">
+          <input class="add-input kr-input" id="newHangul" placeholder="한글 (Hangul)">
+          <input class="add-input" id="newRom" placeholder="Romanization">
+        </div>
+        <div class="add-row">
+          <input class="add-input" id="newEng" placeholder="English meaning" style="flex:2">
+        </div>
+        <button class="add-btn-full" onclick="addVocab()">+ Add to Vocab Bank</button>
+      </div>
+    </div>`;
+}
+
+function addVocab() {
+  const hangul = document.getElementById('newHangul').value.trim();
+  const rom = document.getElementById('newRom').value.trim();
+  const eng = document.getElementById('newEng').value.trim();
+  if (!hangul && !rom) return;
+  vocabBank.push({ id: 'v_' + Date.now(), hangul: hangul || rom, rom, eng, status: 'new', nextReview: todayKey });
+  saveVocab();
+  render();
+}
+
+function deleteVocab(id) {
+  vocabBank = vocabBank.filter(v => v.id !== id);
+  saveVocab();
+  render();
+}
+
+function getDueForReview() {
+  return vocabBank.filter(v => v.status !== 'known' || v.nextReview <= todayKey);
+}
+
+function reviewHTML() {
+  const due = getDueForReview();
+  if (due.length === 0) return `<div class="flash-empty">No words due for review right now — nice work! Add more words in the Today tab, or check back tomorrow.</div>`;
+  if (flashIndex >= due.length) flashIndex = 0;
+  const card = due[flashIndex];
+  return `
+    <div class="flash-progress">Card ${flashIndex + 1} of ${due.length}</div>
+    <div class="flash-card ${flashFlipped ? 'flipped' : ''}" onclick="flipCard()">
+      <div class="flash-front kr">${card.hangul}</div>
+      <div class="flash-back">
+        <div class="fb-rom">${card.rom}</div>
+        <div class="fb-eng">${card.eng}</div>
+      </div>
+      <div class="flash-hint">${flashFlipped ? 'How well did you know it?' : 'Tap to reveal'}</div>
+    </div>
+    ${flashFlipped ? `
+    <div class="flash-actions">
+      <button class="flash-btn shaky" onclick="gradeCard('${card.id}','shaky')">Still Shaky</button>
+      <button class="flash-btn know" onclick="gradeCard('${card.id}','known')">I Know This</button>
+    </div>` : ''}
+  `;
+}
+
+function flipCard() { flashFlipped = !flashFlipped; render(); }
+
+function gradeCard(id, grade) {
+  const v = vocabBank.find(x => x.id === id);
+  if (v) {
+    if (grade === 'known') {
+      const intervals = { new: 3, shaky: 7, known: 14 };
+      const days = v.status === 'known' ? 21 : (intervals[v.status] || 3);
+      const next = new Date(today); next.setDate(next.getDate() + days);
+      v.status = 'known';
+      v.nextReview = next.toISOString().split('T')[0];
+    } else {
+      v.status = 'shaky';
+      v.nextReview = todayKey;
+    }
+  }
+  saveVocab();
+  flashFlipped = false;
+  flashIndex = 0;
+  render();
+}
+
+function vocabBankHTML() {
+  if (vocabBank.length === 0) return `<div class="flash-empty">Your vocab bank is empty — add words from the Today tab as you learn them.</div>`;
+  const known = vocabBank.filter(v => v.status === 'known');
+  const shaky = vocabBank.filter(v => v.status === 'shaky');
+  const fresh = vocabBank.filter(v => v.status === 'new');
+  let h = '';
+  [['🔵 Mastered', known], ['🔴 Still Shaky', shaky], ['🔵 New', fresh]].forEach(([label, list]) => {
+    if (list.length === 0) return;
+    h += `<div class="section"><div class="section-header"><span class="section-label">${label}</span><div class="section-line"></div><span class="section-count">${list.length}</span></div>`;
+    list.forEach(v => {
+      h += `<div class="vocab-item">
+        <div class="vocab-main">
+          <div class="vocab-hangul kr">${v.hangul}</div>
+          <div class="vocab-rom">${v.rom}</div>
+          <div class="vocab-eng">${v.eng}</div>
+        </div>
+        <span class="vocab-status status-${v.status}">${v.status}</span>
+        <button class="vocab-del" onclick="deleteVocab('${v.id}')">×</button>
+      </div>`;
+    });
+    h += `</div>`;
+  });
+  return h;
+}
+
+function setView(v) {
+  currentView = v;
+  flashFlipped = false;
+  flashIndex = 0;
+  document.querySelectorAll('.view-btn').forEach((b,i) => b.classList.toggle('active', ['today','review','vocab'][i]===v));
+  render();
+}
+
+function render() {
+  let h = '';
+  if (currentView === 'today') h = todayHTML();
+  else if (currentView === 'review') h = reviewHTML();
+  else h = vocabBankHTML();
+  document.getElementById('mainContent').innerHTML = h;
+  updateStats();
+}
+
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+document.getElementById('dateDisplay').textContent = `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}`;
+
+render();
+</script>
+</body>
+</html>
