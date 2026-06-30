@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Hub — Marko</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #f5f1e8; --surface: #fdfbf6; --surface2: #f0ebdf; --surface3: #e6e0d2;
+    --border: #ddd6c6; --accent: #5b7fd4; --accent2: #9d8cd9;
+    --green: #5aa56f; --amber: #d99a3e; --red: #d96b5b;
+    --text: #2d2a3e; --text2: #6b6680; --text3: #9a96aa;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* HEADER */
+  .header { padding: 22px 28px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-left h1 { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; }
+  .date { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 400; color: var(--text); letter-spacing: -0.03em; line-height: 1; }
+  .greeting { font-size: 12px; color: var(--text2); margin-top: 5px; font-weight: 400; }
+  .header-right { display: flex; align-items: center; gap: 14px; padding-top: 4px; }
+  .progress-label { text-align: right; }
+  .pct { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; color: var(--accent2); line-height: 1; }
+  .plabel { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 3px; }
+  svg.ring { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--surface3); stroke-width: 3.5; }
+  .ring-fg { fill: none; stroke: var(--accent); stroke-width: 3.5; stroke-linecap: round; transition: stroke-dashoffset 0.7s cubic-bezier(.4,0,.2,1); }
+
+  /* STATS */
+  .stats-bar { display: flex; gap: 10px; padding: 16px 28px 0; }
+  .stat-pill { flex: 1; padding: 12px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; text-align: center; }
+  .stat-pill .sv { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--text); line-height: 1; }
+  .stat-pill .sl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 5px; }
+  .stat-pill.streak-pill .sv { color: var(--amber); }
+
+  /* WIND DOWN */
+  .wind-down { margin: 14px 28px 0; padding: 11px 16px; background: rgba(91,127,212,0.08); border: 1px solid rgba(91,127,212,0.25); border-radius: 10px; display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--accent); }
+  .wind-down-hidden { display: none; }
+
+  /* VIEW TOGGLE */
+  .view-bar { display: flex; gap: 6px; padding: 16px 28px 0; }
+  .view-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; }
+  .view-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .view-btn:hover:not(.active) { border-color: var(--accent2); color: var(--text); }
+
+  /* TABS */
+  .tab-bar { display: flex; padding: 12px 28px 0; border-bottom: 1px solid var(--border); margin-top: 2px; }
+  .tab { padding: 8px 18px; font-size: 12px; font-weight: 500; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; position: relative; bottom: -1px; }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text2); }
+
+  /* FOCUS BANNER */
+  .focus-banner { margin: 14px 28px 0; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .focus-banner .fb-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .focus-items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .focus-chip { padding: 4px 10px; background: rgba(91,127,212,0.12); border: 1px solid rgba(91,127,212,0.25); border-radius: 20px; font-size: 11px; color: var(--accent); }
+
+  /* CONTENT */
+  .content { padding: 14px 28px 40px; max-height: calc(100vh - 280px); overflow-y: auto; }
+  .content::-webkit-scrollbar { width: 3px; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+  /* SECTION */
+  .section { margin-bottom: 22px; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); white-space: nowrap; }
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+  .section-count { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3); }
+
+  /* TASK */
+  .task-item { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 9px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 5px; cursor: pointer; transition: all 0.15s; }
+  .task-item:hover { border-color: var(--accent); background: var(--surface2); }
+  .task-item.done { opacity: 0.5; }
+  .task-item.done .task-name { text-decoration: line-through; color: var(--text3); }
+  .check-box { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .task-item.done .check-box { background: var(--green); border-color: var(--green); }
+  .check-icon { display: none; font-size: 11px; color: white; }
+  .task-item.done .check-icon { display: block; }
+  .task-info { flex: 1; min-width: 0; }
+  .task-name { font-size: 13px; font-weight: 400; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; flex-wrap: wrap; }
+  .task-tag { font-size: 8px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+  .tag-work { background: rgba(91,127,212,0.15); color: #3d5fab; }
+  .tag-personal { background: rgba(90,165,111,0.15); color: #3f7d53; }
+  .tag-wellness { background: rgba(217,154,62,0.15); color: #a9722a; }
+  .tag-morning { background: rgba(217,154,62,0.13); color: #a9722a; }
+  .tag-evening { background: rgba(157,140,217,0.18); color: #6f5cb8; }
+  .recurring-badge { font-size: 9px; color: var(--text3); }
+  .task-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .streak { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--amber); }
+  .priority-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .p-high { background: var(--red); }
+  .p-medium { background: var(--amber); }
+  .p-low { background: var(--green); }
+  .priority-select { padding: 3px 6px; border-radius: 5px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-family: 'Inter', sans-serif; font-size: 9px; cursor: pointer; outline: none; }
+
+  /* ADD TASK */
+  .add-task-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-input { flex: 1; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; outline: none; transition: border-color 0.15s; }
+  .add-input:focus { border-color: var(--accent); }
+  .add-input::placeholder { color: var(--text3); }
+  .add-btn { padding: 10px 18px; background: var(--accent); border: none; border-radius: 9px; color: white; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+  .add-btn:hover { opacity: 0.85; }
+
+  /* WATER */
+  .water-tracker { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; margin-bottom: 5px; }
+  .water-label { font-size: 13px; color: var(--text); flex: 1; }
+  .water-bottles { display: flex; gap: 5px; }
+  .bottle { width: 30px; height: 30px; border-radius: 7px; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .bottle.filled { background: rgba(91,127,212,0.18); border-color: var(--accent); }
+  .bottle:hover { border-color: var(--accent); }
+
+  /* SLEEP */
+
+  /* DELETE BUTTON for custom tasks */
+  .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 2px 4px; border-radius: 4px; transition: color 0.15s; flex-shrink: 0; }
+  .del-btn:hover { color: var(--red); }
+
+  /* RECURRING SCHEDULE */
+  .sched-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; margin-bottom: 5px; }
+  .sched-info { flex: 1; min-width: 0; }
+  .sched-name { font-size: 13px; color: var(--text); }
+  .sched-cadence { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px; }
+  .sched-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); white-space: nowrap; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Daily Hub</h1>
+    <div class="date" id="dateDisplay"></div>
+    <div class="greeting" id="greetingDisplay"></div>
+  </div>
+  <div class="header-right">
+    <div class="progress-label">
+      <div class="pct" id="pctDisplay">0%</div>
+      <div class="plabel">Complete</div>
+    </div>
+    <svg class="ring" width="50" height="50" viewBox="0 0 50 50">
+      <circle class="ring-bg" cx="25" cy="25" r="20"/>
+      <circle class="ring-fg" id="ringCircle" cx="25" cy="25" r="20" stroke-dasharray="125.7" stroke-dashoffset="125.7"/>
+    </svg>
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-pill"><div class="sv" id="statDone">0</div><div class="sl">Done</div></div>
+  <div class="stat-pill"><div class="sv" id="statLeft">0</div><div class="sl">Left</div></div>
+  <div class="stat-pill streak-pill"><div class="sv" id="statStreak">🔥 0</div><div class="sl">Day Streak</div></div>
+</div>
+
+<div class="wind-down wind-down-hidden" id="windDownBanner">
+  <span>🌙</span><span>Wind-down time — screens off in 30 mins. You've earned it.</span>
+</div>
+
+<div id="focusBanner"></div>
+
+<div class="view-bar">
+  <button class="view-btn active" onclick="setView('tabs')">Tabs</button>
+  <button class="view-btn" onclick="setView('all')">All</button>
+  <button class="view-btn" onclick="setView('priority')">Priority</button>
+</div>
+
+<div class="tab-bar" id="tabBar">
+  <div class="tab active" onclick="setTab('wellness')">Wellness</div>
+  <div class="tab" onclick="setTab('work')">Work</div>
+  <div class="tab" onclick="setTab('personal')">Personal</div>
+</div>
+
+<div class="content" id="mainContent"></div>
+
+<script>
+const today = new Date();
+const todayKey = today.toISOString().split('T')[0];
+const dow = today.getDay();
+const hour = today.getHours();
+
+let checked = JSON.parse(localStorage.getItem('dh_checked_' + todayKey) || '{}');
+let customTasks = JSON.parse(localStorage.getItem('dh_custom') || '[]');
+let waterCount = parseInt(localStorage.getItem('dh_water_' + todayKey) || '0');
+let priorityOverrides = JSON.parse(localStorage.getItem('dh_priorities') || '{}');
+let streaks = JSON.parse(localStorage.getItem('dh_streaks') || '{}');
+let monthDone = JSON.parse(localStorage.getItem('dh_monthdone') || '{}');
+let currentView = 'tabs';
+let currentTab = 'wellness';
+
+function isPayrollWeek() {
+  const anchor = new Date('2026-06-29');
+  const diff = Math.floor((today - anchor) / 86400000);
+  return diff >= 0 && diff % 14 < 7;
+}
+function lastBizDayOfMonth(d) {
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  while (last.getDay() === 0 || last.getDay() === 6) last.setDate(last.getDate() - 1);
+  return last;
+}
+function isLastBizDay() {
+  return lastBizDayOfMonth(today).getDate() === today.getDate();
+}
+function fmtShort(d) {
+  const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${m[d.getMonth()]} ${d.getDate()}`;
+}
+function daysLeft() { return new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() - today.getDate(); }
+
+// Cheques cover the PRIOR month, delivered in the first 7 days of the current month.
+function inCheqWindow() { return today.getDate() <= 7; }
+function cheqCoversMonth(d) {
+  const prev = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+  const m = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return { label: m[prev.getMonth()], key: `${prev.getFullYear()}-${prev.getMonth()}` };
+}
+function nextCheqWindowStart() {
+  if (inCheqWindow()) return new Date(today.getFullYear(), today.getMonth(), 1);
+  return new Date(today.getFullYear(), today.getMonth() + 1, 1);
+}
+
+function getRecurring() {
+  const t = [];
+  if (dow === 1) {
+    t.push({ id: 'r_cal_mon', name: 'Review weekly calendar', tag: 'work', priority: 'high', recurring: '↻ Mon' });
+    if (isPayrollWeek()) t.push({ id: 'r_payroll', name: 'Send payroll to Nancy', tag: 'work', priority: 'high', recurring: '↻ Bi-weekly' });
+  }
+  if (dow === 5) t.push({ id: 'r_cal_fri', name: 'End-of-week calendar review', tag: 'work', priority: 'medium', recurring: '↻ Fri' });
+  const lbd = fmtShort(lastBizDayOfMonth(today));
+  if (isLastBizDay()) t.push({ id: 'r_etransfer', name: `E-transfer Junior Academy gym fee — due ${lbd}`, tag: 'work', priority: 'high', recurring: '↻ Last biz day' });
+  if (inCheqWindow()) {
+    const cov = cheqCoversMonth(today);
+    const mk = 'cheques_' + cov.key;
+    if (!monthDone[mk] || monthDone[mk] === todayKey) {
+      const wend = new Date(today.getFullYear(), today.getMonth(), 7);
+      t.push({ id: 'r_cheques', monthKey: mk, name: `Deliver cheques: Northmount + Hawthorn (${cov.label}) — by ${fmtShort(wend)}`, tag: 'work', priority: 'high', recurring: '↻ First week' });
+    }
+  }
+  if (today.getDate() === 1) t.push({ id: 'r_goals', name: 'Review monthly goals', tag: 'work', priority: 'high', recurring: '↻ Monthly' });
+  return t;
+}
+
+const morningTasks = [
+  { id: 'w_bed',         name: 'Make the bed',             tag: 'wellness', time: 'morning', priority: 'high' },
+  { id: 'w_activation',  name: 'Body activation / mobility',tag: 'wellness', time: 'morning', priority: 'high' },
+  { id: 'w_tongue',      name: 'Tongue scrape',           tag: 'wellness', time: 'morning', priority: 'high' },
+  { id: 'w_sunscreen',   name: 'Sunscreen',                tag: 'wellness', time: 'morning', priority: 'medium' },
+  { id: 'w_creatine',    name: 'Creatine (pre-workout)',   tag: 'wellness', time: 'morning', priority: 'medium' },
+  { id: 'w_sunlight',    name: '10 mins sunlight',         tag: 'wellness', time: 'morning', priority: 'high' },
+  { id: 'w_affirmations',name: 'Read affirmations',        tag: 'wellness', time: 'morning', priority: 'high' },
+];
+
+const eveningTasks = [
+  { id: 'w_workout',  name: 'Workout done ✓',       tag: 'wellness', time: 'evening', priority: 'high' },
+  { id: 'w_protein',  name: 'Protein shake',         tag: 'wellness', time: 'evening', priority: 'medium' },
+  { id: 'w_tongue_pm',name: 'Tongue scrape',         tag: 'wellness', time: 'evening', priority: 'high' },
+  { id: 'w_steps',    name: '10,000 steps',          tag: 'wellness', time: 'evening', priority: 'medium' },
+  { id: 'w_korean',   name: 'Korean study ✓',        tag: 'wellness', time: 'evening', priority: 'medium' },
+  { id: 'w_spiritual',name: 'Spiritual time ✓',      tag: 'wellness', time: 'evening', priority: 'medium' },
+  { id: 'w_dishes',   name: 'Clean dishes',           tag: 'wellness', time: 'evening', priority: 'high' },
+  { id: 'w_floss',    name: 'Flossing',               tag: 'wellness', time: 'evening', priority: 'high', streakKey: 'floss' },
+  { id: 'w_guasha',   name: 'Gua sha',                tag: 'wellness', time: 'evening', priority: 'low', streakKey: 'guasha' },
+  { id: 'w_castor',   name: 'Castor oil (hair)',      tag: 'wellness', time: 'evening', priority: 'low', streakKey: 'castor' },
+];
+
+function getPriority(t) { return priorityOverrides[t.id] || t.priority || 'medium'; }
+function setPriority(id, val, e) {
+  e.stopPropagation();
+  priorityOverrides[id] = val;
+  localStorage.setItem('dh_priorities', JSON.stringify(priorityOverrides));
+  render();
+}
+
+function toggle(id, sk, mk) {
+  checked[id] = !checked[id];
+  localStorage.setItem('dh_checked_' + todayKey, JSON.stringify(checked));
+  if (sk && checked[id]) updateStreak(sk);
+  if (mk) {
+    if (checked[id]) monthDone[mk] = todayKey;
+    else delete monthDone[mk];
+    localStorage.setItem('dh_monthdone', JSON.stringify(monthDone));
+  }
+  render();
+}
+
+function updateStreak(key) {
+  const lk = 'dh_slast_' + key;
+  const last = localStorage.getItem(lk);
+  if (last === todayKey) return;
+  const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+  const yk = yest.toISOString().split('T')[0];
+  streaks[key] = (last === yk) ? (streaks[key] || 0) + 1 : 1;
+  localStorage.setItem(lk, todayKey);
+  localStorage.setItem('dh_streaks', JSON.stringify(streaks));
+}
+
+function deleteCustomTask(id, e) {
+  e.stopPropagation();
+  customTasks = customTasks.filter(t => t.id !== id);
+  localStorage.setItem('dh_custom', JSON.stringify(customTasks));
+  render();
+}
+
+function updateProgress() {
+  const recurring = getRecurring();
+  const all = [...recurring, ...customTasks, ...morningTasks, ...eveningTasks];
+  const totalItems = all.length;
+  const doneItems = all.filter(t => checked[t.id]).length;
+  const pct = totalItems === 0 ? 0 : Math.round((doneItems / totalItems) * 100);
+
+  document.getElementById('pctDisplay').textContent = pct + '%';
+  document.getElementById('statDone').textContent = doneItems;
+  document.getElementById('statLeft').textContent = Math.max(0, totalItems - doneItems);
+
+  const circ = 125.7;
+  document.getElementById('ringCircle').style.strokeDashoffset = circ - (pct / 100) * circ;
+
+  // Day streak logic
+  if (doneItems > 0 && !localStorage.getItem('dh_had_' + todayKey)) {
+    const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+    const yk = yest.toISOString().split('T')[0];
+    const hadYest = localStorage.getItem('dh_had_' + yk);
+    const prev = parseInt(localStorage.getItem('dh_streak') || '0');
+    localStorage.setItem('dh_streak', hadYest ? prev + 1 : 1);
+    localStorage.setItem('dh_had_' + todayKey, '1');
+  }
+  document.getElementById('statStreak').textContent = '🔥 ' + (localStorage.getItem('dh_streak') || '0');
+}
+
+// Focus banner — shows top 3 high priority incomplete tasks
+function renderFocusBanner() {
+  if (hour >= 13) { document.getElementById('focusBanner').innerHTML = ''; return; } // only show in morning
+  const recurring = getRecurring();
+  const all = [...recurring, ...customTasks, ...morningTasks, ...eveningTasks];
+  const top = all.filter(t => !checked[t.id] && getPriority(t) === 'high').slice(0, 3);
+  if (top.length === 0) { document.getElementById('focusBanner').innerHTML = ''; return; }
+  const chips = top.map(t => `<span class="focus-chip">${t.name}</span>`).join('');
+  document.getElementById('focusBanner').innerHTML = `
+    <div class="focus-banner">
+      <div class="fb-label">Today's Focus</div>
+      <div class="focus-items">${chips}</div>
+    </div>`;
+}
+
+function taskHTML(t, allowDelete) {
+  const done = !!checked[t.id];
+  const p = getPriority(t);
+  const sv = t.streakKey ? (streaks[t.streakKey] || 0) : null;
+  return `<div class="task-item ${done ? 'done' : ''}" onclick="toggle('${t.id}','${t.streakKey||''}','${t.monthKey||''}')">
+    <div class="check-box"><span class="check-icon">✓</span></div>
+    <div class="task-info">
+      <div class="task-name">${t.name}</div>
+      <div class="task-meta">
+        <span class="task-tag tag-${t.tag}">${t.tag}</span>
+        ${t.time ? `<span class="task-tag tag-${t.time}">${t.time}</span>` : ''}
+        ${t.recurring ? `<span class="recurring-badge">${t.recurring}</span>` : ''}
+      </div>
+    </div>
+    <div class="task-right">
+      ${sv !== null ? `<span class="streak">🔥${sv}</span>` : ''}
+      <div class="priority-dot p-${p}"></div>
+      <select class="priority-select" onclick="event.stopPropagation()" onchange="setPriority('${t.id}',this.value,event)">
+        <option value="high"   ${p==='high'  ?'selected':''}>↑ High</option>
+        <option value="medium" ${p==='medium'?'selected':''}>→ Med</option>
+        <option value="low"    ${p==='low'   ?'selected':''}>↓ Low</option>
+      </select>
+      ${allowDelete ? `<button class="del-btn" onclick="deleteCustomTask('${t.id}',event)" title="Remove">×</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function section(label, tasks, addCat, allowDelete) {
+  const done = tasks.filter(t => checked[t.id]).length;
+  let h = `<div class="section"><div class="section-header"><span class="section-label">${label}</span><div class="section-line"></div><span class="section-count">${done}/${tasks.length}</span></div>`;
+  if (tasks.length === 0 && !addCat) h += `<div style="padding:10px 0;font-size:12px;color:var(--text3)">Nothing here yet.</div>`;
+  tasks.forEach(t => h += taskHTML(t, !!allowDelete));
+  if (addCat) h += `<div class="add-task-row"><input class="add-input" id="ai_${addCat}" placeholder="Add task..." onkeydown="if(event.key==='Enter')addTask('${addCat}')"><button class="add-btn" onclick="addTask('${addCat}')">+ Add</button></div>`;
+  return h + '</div>';
+}
+
+function waterHTML() {
+  let h = `<div class="section"><div class="section-header"><span class="section-label">Water Intake</span><div class="section-line"></div><span class="section-count">${waterCount}/5 bottles</span></div>
+  <div class="water-tracker"><span class="water-label">💧 LARQ (17oz each)</span><div class="water-bottles">`;
+  for (let i = 1; i <= 5; i++) h += `<div class="bottle ${i<=waterCount?'filled':''}" onclick="setWater(${i})" title="Bottle ${i}">💧</div>`;
+  return h + '</div></div></div>';
+}
+
+function setWater(n) { waterCount = waterCount===n ? n-1 : n; localStorage.setItem('dh_water_'+todayKey, waterCount); render(); }
+
+function addTask(cat) {
+  const el = document.getElementById('ai_' + cat);
+  const v = el?.value.trim();
+  if (!v) return;
+  customTasks.push({ id: 'c_' + Date.now(), name: v, tag: cat, priority: 'medium' });
+  localStorage.setItem('dh_custom', JSON.stringify(customTasks));
+  el.value = '';
+  render();
+}
+
+// Compute the next date each recurring work task will fire
+function nextDow(targetDow) {
+  const d = new Date(today);
+  let add = (targetDow - d.getDay() + 7) % 7;
+  if (add === 0) add = 0; // today counts
+  d.setDate(d.getDate() + add);
+  return d;
+}
+function nextPayrollMonday() {
+  let d = nextDow(1);
+  for (let i = 0; i < 4; i++) {
+    const anchor = new Date('2026-06-29');
+    const diff = Math.floor((d - anchor) / 86400000);
+    if (diff >= 0 && diff % 14 < 7) return d;
+    d = new Date(d); d.setDate(d.getDate() + 7);
+  }
+  return d;
+}
+function nextFirstOfMonth() {
+  if (today.getDate() === 1) return new Date(today);
+  return new Date(today.getFullYear(), today.getMonth() + 1, 1);
+}
+function nextLastBizDay() {
+  let lbd = lastBizDayOfMonth(today);
+  if (lbd < today) lbd = lastBizDayOfMonth(new Date(today.getFullYear(), today.getMonth() + 1, 1));
+  return lbd;
+}
+function fmtFull(d) {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return `${days[d.getDay()]} ${fmtShort(d)}`;
+}
+
+function recurringScheduleHTML() {
+  const lbd = nextLastBizDay();
+  const cwStart = nextCheqWindowStart();
+  const cwEnd = new Date(cwStart.getFullYear(), cwStart.getMonth(), 7);
+  const rows = [
+    { name: 'Review weekly calendar',          cadence: 'Every Monday',        next: nextDow(1) },
+    { name: 'End-of-week calendar review',      cadence: 'Every Friday',        next: nextDow(5) },
+    { name: 'Send payroll to Nancy',            cadence: 'Bi-weekly Monday',    next: nextPayrollMonday() },
+    { name: 'Review monthly goals',             cadence: '1st of month',        next: nextFirstOfMonth() },
+    { name: 'E-transfer Junior Academy gym fee',cadence: 'Last business day',   next: lbd },
+    { name: 'Deliver cheques: Northmount + Hawthorn', cadence: 'First week (prior month)', next: cwEnd, window: cwStart },
+  ];
+  let h = `<div class="section"><div class="section-header"><span class="section-label">Recurring Work Schedule</span><div class="section-line"></div></div>`;
+  rows.forEach(r => {
+    const dateLabel = r.window ? `${fmtShort(r.window)}–${fmtShort(r.next)}` : fmtFull(r.next);
+    h += `<div class="sched-row">
+      <div class="sched-info"><div class="sched-name">${r.name}</div><div class="sched-cadence">${r.cadence}</div></div>
+      <div class="sched-date">${dateLabel}</div>
+    </div>`;
+  });
+  return h + '</div>';
+}
+
+function setView(v) {
+  currentView = v;
+  document.querySelectorAll('.view-btn').forEach((b,i) => b.classList.toggle('active', ['tabs','all','priority'][i]===v));
+  document.getElementById('tabBar').style.display = v==='tabs' ? 'flex' : 'none';
+  render();
+}
+
+function setTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.textContent.toLowerCase()===t));
+  render();
+}
+
+function render() {
+  const recurring = getRecurring();
+  const personal = customTasks.filter(t => t.tag==='personal');
+  const work = customTasks.filter(t => t.tag==='work');
+  let h = '';
+
+  if (currentView==='tabs') {
+    if (currentTab==='work') {
+      if (recurring.length) h += section('Recurring — Today', recurring, null, false);
+      h += section('One-off Tasks', work, 'work', true);
+      h += recurringScheduleHTML();
+    } else if (currentTab==='personal') {
+      h += section('Personal', personal, 'personal', true);
+    } else {
+      h += section('Morning Routine', morningTasks, null, false);
+      h += waterHTML();
+      h += section('Evening Routine', eveningTasks, null, false);
+    }
+  } else if (currentView==='all') {
+    if (recurring.length) h += section('Work — Recurring', recurring, null, false);
+    h += section('Work — Tasks', work, 'work', true);
+    h += recurringScheduleHTML();
+    h += section('Personal', personal, 'personal', true);
+    h += section('Morning Wellness', morningTasks, null, false);
+    h += waterHTML();
+    h += section('Evening Wellness', eveningTasks, null, false);
+  } else {
+    const all = [...recurring, ...work, ...personal, ...morningTasks, ...eveningTasks];
+    const hi = all.filter(t => getPriority(t)==='high');
+    const me = all.filter(t => getPriority(t)==='medium');
+    const lo = all.filter(t => getPriority(t)==='low');
+    if (hi.length) h += section('🔴 High Priority', hi, null, false);
+    if (me.length) h += section('🟡 Medium', me, null, false);
+    if (lo.length) h += section('🟢 Low', lo, null, false);
+  }
+
+  document.getElementById('mainContent').innerHTML = h;
+  renderFocusBanner();
+  updateProgress();
+}
+
+// Header init
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+document.getElementById('dateDisplay').textContent = `${days[dow]}, ${months[today.getMonth()]} ${today.getDate()}`;
+document.getElementById('greetingDisplay').textContent = `${hour<12?'Good morning':hour<18?'Good afternoon':'Good evening'}, Marko.`;
+if (hour >= 22) document.getElementById('windDownBanner').classList.remove('wind-down-hidden');
+
+render();
+</script>
+</body>
+</html>
