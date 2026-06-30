@@ -140,9 +140,11 @@ for (let i = 0; i < STAR_COUNT; i++) {
 }
 
 planets = [
-  { x: 0.08, y: 0.18, r: 34, color: '#3a3550', ring: false, glow: 'rgba(167,139,250,0.08)' },
+  { x: 0.08, y: 0.18, r: 34, color: '#1a3a6b', ring: false, glow: 'rgba(59,100,210,0.09)', type: 'neptune' },
   { x: 0.92, y: 0.72, r: 22, color: '#4a3328', ring: true, glow: 'rgba(239,100,97,0.07)' },
-  { x: 0.85, y: 0.12, r: 12, color: '#2e3a52', ring: false, glow: 'rgba(108,99,255,0.06)' }
+  { x: 0.74, y: 0.07, r: 18, color: '#3a4e2c', ring: false, glow: 'rgba(59,130,246,0.07)', type: 'earth' },
+  { x: 0.12, y: 0.72, r: 42, color: '#5c3d28', ring: false, glow: 'rgba(244,162,89,0.07)', type: 'jupiter' },
+  { x: 0.55, y: 0.92, r: 14, color: '#6b3328', ring: false, glow: 'rgba(220,100,60,0.07)', type: 'mars' },
 ];
 
 function randDir() { return Math.random() > 0.5 ? 1 : -1; }
@@ -150,10 +152,12 @@ function randSpeed(min, max) { return (min + Math.random() * (max - min)) * rand
 
 let floaters = [
   { type: 'satellite', x: Math.random(), y: Math.random(), vx: randSpeed(0.00008, 0.00016), vy: randSpeed(0.00002, 0.00006), rot: Math.random() * Math.PI * 2 },
+  { type: 'satellite', x: Math.random(), y: Math.random(), vx: randSpeed(0.00006, 0.00013), vy: randSpeed(0.00003, 0.00007), rot: Math.random() * Math.PI * 2 },
   { type: 'ufo', x: Math.random(), y: Math.random(), vx: randSpeed(0.00006, 0.00012), vy: randSpeed(0.00002, 0.00005), rot: 0 },
   { type: 'astronaut', x: Math.random(), y: Math.random(), vx: randSpeed(0.00004, 0.00008), vy: randSpeed(0.00003, 0.00007), rot: 0, spin: Math.random() * Math.PI * 2 },
   { type: 'asteroid', x: Math.random(), y: Math.random(), vx: randSpeed(0.00005, 0.0001), vy: randSpeed(0.00004, 0.00009), rot: Math.random() * Math.PI * 2, spin: randSpeed(0.001, 0.0025), scale: 0.8 + Math.random() * 0.5 },
-  { type: 'asteroid', x: Math.random(), y: Math.random(), vx: randSpeed(0.00004, 0.00008), vy: randSpeed(0.00004, 0.00009), rot: Math.random() * Math.PI * 2, spin: randSpeed(0.001, 0.002), scale: 0.6 + Math.random() * 0.4 }
+  { type: 'asteroid', x: Math.random(), y: Math.random(), vx: randSpeed(0.00004, 0.00008), vy: randSpeed(0.00004, 0.00009), rot: Math.random() * Math.PI * 2, spin: randSpeed(0.001, 0.002), scale: 0.6 + Math.random() * 0.4 },
+  { type: 'asteroid', x: Math.random(), y: Math.random(), vx: randSpeed(0.00005, 0.00009), vy: randSpeed(0.00003, 0.00008), rot: Math.random() * Math.PI * 2, spin: randSpeed(0.0012, 0.0022), scale: 0.5 + Math.random() * 0.4 },
 ];
 
 function wrapPos(v) {
@@ -304,16 +308,127 @@ function maybeSpawnShootingStar() {
   if (Math.random() < 0.0009 && shootingStars.length < 1) spawnShootingStar();
 }
 
-function drawPlanets() {
-  planets.forEach(p => {
-    const px = p.x * w;
-    const py = p.y * h;
-    const grad = ctx.createRadialGradient(px, py, 0, px, py, p.r * 3);
-    grad.addColorStop(0, p.glow);
+function drawMilkyWay() {
+  const startX = 0;
+  const startY = h * 0.65;
+  const endX = w;
+  const endY = h * 0.25;
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  const nx = -dy / len;
+  const ny = dx / len;
+  const bw = Math.min(w, h) * 0.28;
+  const grad = ctx.createLinearGradient(startX, startY, endX, endY);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(0.2, 'rgba(180,180,220,0.028)');
+  grad.addColorStop(0.5, 'rgba(200,200,240,0.04)');
+  grad.addColorStop(0.8, 'rgba(180,180,220,0.028)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(startX + nx * bw, startY + ny * bw);
+  ctx.lineTo(endX + nx * bw, endY + ny * bw);
+  ctx.lineTo(endX - nx * bw, endY - ny * bw);
+  ctx.lineTo(startX - nx * bw, startY - ny * bw);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+  for (var i = 0; i < 80; i++) {
+    var t = Math.random();
+    var cx2 = startX + dx * t + (Math.random() - 0.5) * bw * 1.6;
+    var cy2 = startY + dy * t + (Math.random() - 0.5) * bw * 1.6;
+    var dist = Math.abs((cx2 - startX) * ny - (cy2 - startY) * nx);
+    if (dist > bw) continue;
+    var alpha = (1 - dist / bw) * 0.18 * Math.random();
+    ctx.beginPath();
+    ctx.arc(cx2, cy2, Math.random() * 0.8 + 0.2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(220,220,255,' + alpha + ')';
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawNebula() {
+  var regions = [
+    { x: 0.75, y: 0.45, rx: 180, ry: 120, angle: 0.4, c1: 'rgba(108,63,200,0.045)', c2: 'rgba(63,100,200,0.03)' },
+    { x: 0.15, y: 0.35, rx: 140, ry: 90, angle: -0.3, c1: 'rgba(200,80,120,0.03)', c2: 'rgba(108,63,200,0.025)' }
+  ];
+  regions.forEach(function(n) {
+    var px = n.x * w; var py = n.y * h;
+    var maxR = Math.max(n.rx, n.ry);
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(n.angle);
+    ctx.scale(n.rx / maxR, n.ry / maxR);
+    var grad = ctx.createRadialGradient(0, 0, 0, 0, 0, maxR);
+    grad.addColorStop(0, n.c1);
+    grad.addColorStop(0.5, n.c2);
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(px, py, p.r * 3, 0, Math.PI * 2);
+    ctx.arc(0, 0, maxR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawConstellations() {
+  var constellations = [
+    {
+      offset: { x: w * 0.78, y: h * 0.38 },
+      scale: w * 0.1,
+      stars: [{x:0,y:-1},{x:-0.3,y:-0.4},{x:0.3,y:-0.4},{x:-0.15,y:0.1},{x:0.15,y:0.1},{x:0,y:0.1},{x:-0.35,y:0.7},{x:0.35,y:0.7}],
+      lines: [[0,1],[0,2],[1,3],[2,4],[3,5],[4,5],[3,6],[4,7]]
+    },
+    {
+      offset: { x: w * 0.22, y: h * 0.2 },
+      scale: w * 0.09,
+      stars: [{x:0,y:0},{x:0.4,y:-0.1},{x:0.8,y:0},{x:1.1,y:0.2},{x:0.95,y:0.6},{x:0.6,y:0.75},{x:0.25,y:0.6}],
+      lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,2]]
+    }
+  ];
+  constellations.forEach(function(c) {
+    var ox = c.offset.x; var oy = c.offset.y; var sc = c.scale;
+    c.lines.forEach(function(l) {
+      var s1 = c.stars[l[0]]; var s2 = c.stars[l[1]];
+      ctx.strokeStyle = 'rgba(167,139,250,0.12)';
+      ctx.lineWidth = 0.7;
+      ctx.setLineDash([3,5]);
+      ctx.beginPath();
+      ctx.moveTo(ox + s1.x * sc, oy + s1.y * sc);
+      ctx.lineTo(ox + s2.x * sc, oy + s2.y * sc);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    });
+    c.stars.forEach(function(s) {
+      ctx.beginPath();
+      ctx.arc(ox + s.x * sc, oy + s.y * sc, 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(220,210,255,0.55)';
+      ctx.fill();
+    });
+  });
+}
+
+function lightenColor(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.min(255, (n >> 16) + amt);
+  const g = Math.min(255, ((n >> 8) & 0xff) + amt);
+  const b = Math.min(255, (n & 0xff) + amt);
+  return 'rgb(' + r + ',' + g + ',' + b + ')';
+}
+
+function drawPlanets() {
+  planets.forEach(function(p) {
+    const px = p.x * w;
+    const py = p.y * h;
+
+    const glowGrad = ctx.createRadialGradient(px, py, 0, px, py, p.r * 3.5);
+    glowGrad.addColorStop(0, p.glow);
+    glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(px, py, p.r * 3.5, 0, Math.PI * 2);
     ctx.fill();
 
     if (p.ring) {
@@ -325,13 +440,222 @@ function drawPlanets() {
     }
 
     const bodyGrad = ctx.createRadialGradient(px - p.r * 0.3, py - p.r * 0.3, p.r * 0.1, px, py, p.r);
-    bodyGrad.addColorStop(0, p.color);
+    bodyGrad.addColorStop(0, lightenColor(p.color, 30));
     bodyGrad.addColorStop(1, '#0a0a0f');
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
     ctx.arc(px, py, p.r, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, p.r, 0, Math.PI * 2);
+    ctx.clip();
+
+    if (p.type === 'jupiter') {
+      const bands = [
+        { y: -0.7, h: 0.18, color: 'rgba(180,120,70,0.45)' },
+        { y: -0.42, h: 0.14, color: 'rgba(210,170,110,0.35)' },
+        { y: -0.2, h: 0.18, color: 'rgba(160,100,55,0.45)' },
+        { y: 0.08, h: 0.14, color: 'rgba(200,155,95,0.35)' },
+        { y: 0.3, h: 0.18, color: 'rgba(170,110,60,0.4)' },
+        { y: 0.55, h: 0.14, color: 'rgba(195,145,85,0.3)' },
+      ];
+      bands.forEach(function(b) {
+        ctx.fillStyle = b.color;
+        ctx.fillRect(px - p.r, py + b.y * p.r, p.r * 2, b.h * p.r * 2);
+      });
+      ctx.fillStyle = 'rgba(160,80,50,0.35)';
+      ctx.beginPath();
+      ctx.ellipse(px - p.r * 0.2, py + p.r * 0.15, p.r * 0.28, p.r * 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (p.type === 'earth') {
+      ctx.fillStyle = 'rgba(30,80,180,0.5)';
+      ctx.fillRect(px - p.r, py - p.r, p.r * 2, p.r * 2);
+      ctx.fillStyle = 'rgba(40,130,60,0.55)';
+      ctx.beginPath();
+      ctx.ellipse(px - p.r * 0.1, py - p.r * 0.2, p.r * 0.4, p.r * 0.3, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(px + p.r * 0.3, py + p.r * 0.15, p.r * 0.35, p.r * 0.25, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(220,235,255,0.2)';
+      ctx.beginPath();
+      ctx.ellipse(px - p.r * 0.3, py - p.r * 0.55, p.r * 0.5, p.r * 0.1, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (p.type === 'mars') {
+      ctx.fillStyle = 'rgba(160,60,30,0.4)';
+      ctx.beginPath();
+      ctx.ellipse(px + p.r * 0.1, py - p.r * 0.2, p.r * 0.5, p.r * 0.35, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(200,100,60,0.3)';
+      ctx.beginPath();
+      ctx.ellipse(px - p.r * 0.25, py + p.r * 0.2, p.r * 0.35, p.r * 0.25, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (p.type === 'neptune') {
+      ctx.fillStyle = 'rgba(30,80,200,0.4)';
+      ctx.fillRect(px - p.r, py - p.r * 0.3, p.r * 2, p.r * 0.3);
+      ctx.fillStyle = 'rgba(60,120,220,0.35)';
+      ctx.fillRect(px - p.r, py + p.r * 0.1, p.r * 2, p.r * 0.25);
+    }
+
+    ctx.restore();
   });
+}
+
+function drawMoon() {
+  const px = w * 0.32;
+  const py = h * 0.06;
+  const r = 20;
+  const glow = ctx.createRadialGradient(px, py, 0, px, py, r * 3.5);
+  glow.addColorStop(0, 'rgba(220,220,180,0.07)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(px, py, r * 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  const body = ctx.createRadialGradient(px - r * 0.2, py - r * 0.2, r * 0.1, px, py, r);
+  body.addColorStop(0, '#d8d4c0');
+  body.addColorStop(1, '#6e6a58');
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.arc(px, py, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(80,78,65,0.35)';
+  [[0.2, -0.3, 3.5], [-0.35, 0.1, 2.5], [0.1, 0.4, 2], [-0.1, -0.1, 4], [0.4, 0.25, 2]].forEach(function(c) {
+    ctx.beginPath();
+    ctx.arc(px + c[0] * r, py + c[1] * r, c[2], 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.fillStyle = '#0a0a0f';
+  ctx.beginPath();
+  ctx.arc(px + r * 0.38, py - r * 0.18, r * 0.82, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawSun() {
+  const px = w * 0.92;
+  const py = h * -0.04;
+  const r = 55;
+  for (var layer = 3; layer >= 0; layer--) {
+    const corona = ctx.createRadialGradient(px, py, r * 0.5, px, py, r * (2.5 + layer * 1.2));
+    const alpha = [0.06, 0.04, 0.025, 0.012][layer];
+    corona.addColorStop(0, 'rgba(255,200,80,' + alpha + ')');
+    corona.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = corona;
+    ctx.beginPath();
+    ctx.arc(px, py, r * (2.5 + layer * 1.2), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const body = ctx.createRadialGradient(px - r * 0.2, py - r * 0.2, r * 0.1, px, py, r);
+  body.addColorStop(0, '#fff0a0');
+  body.addColorStop(0.6, '#ffcc44');
+  body.addColorStop(1, '#e87820');
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.arc(px, py, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawAsteroidBelt() {
+  const cx = w * 0.5;
+  const cy = h * 0.5;
+  const rMin = Math.min(w, h) * 0.42;
+  const rMax = Math.min(w, h) * 0.52;
+  for (var i = 0; i < 120; i++) {
+    const angle = (i / 120) * Math.PI * 2;
+    const r = rMin + Math.sin(i * 7.3 + 2.1) * (rMax - rMin) * 0.5 + (rMax - rMin) * 0.5;
+    const nx = cx + Math.cos(angle) * r;
+    const ny = cy + Math.sin(angle) * r;
+    if (nx < 0 || nx > w || ny < 0 || ny > h) continue;
+    const dist = Math.min(Math.abs(nx - w * 0.5) / (w * 0.5), Math.abs(ny - h * 0.5) / (h * 0.5));
+    const alpha = 0.14 + Math.sin(i * 3.7) * 0.06;
+    const size = 0.6 + Math.abs(Math.sin(i * 2.3)) * 1.2;
+    ctx.beginPath();
+    ctx.arc(nx, ny, size, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(160,155,145,' + alpha + ')';
+    ctx.fill();
+  }
+}
+
+let comet = null;
+let cometTimer = 0;
+
+function spawnComet() {
+  const fromLeft = Math.random() > 0.5;
+  comet = {
+    x: fromLeft ? -80 : w + 80,
+    y: Math.random() * h * 0.4,
+    vx: (fromLeft ? 1 : -1) * (1.4 + Math.random() * 0.8),
+    vy: 0.5 + Math.random() * 0.6,
+    life: 0,
+    maxLife: Math.ceil((w + 160) / 1.8)
+  };
+}
+
+function drawComet() {
+  if (!comet) return;
+  comet.x += comet.vx;
+  comet.y += comet.vy;
+  comet.life++;
+  if (comet.life >= comet.maxLife) { comet = null; return; }
+
+  const fadeIn = Math.min(comet.life / 20, 1);
+  const fadeOut = comet.life > comet.maxLife - 30 ? (comet.maxLife - comet.life) / 30 : 1;
+  const alpha = fadeIn * fadeOut;
+
+  const tailLen = 90;
+  const tailX = comet.x - comet.vx * tailLen;
+  const tailY = comet.y - comet.vy * tailLen;
+
+  const tailGrad = ctx.createLinearGradient(tailX, tailY, comet.x, comet.y);
+  tailGrad.addColorStop(0, 'rgba(167,220,255,0)');
+  tailGrad.addColorStop(0.5, 'rgba(140,200,255,' + (0.18 * alpha) + ')');
+  tailGrad.addColorStop(1, 'rgba(255,255,255,' + (0.7 * alpha) + ')');
+  ctx.strokeStyle = tailGrad;
+  ctx.lineWidth = 3.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(tailX, tailY);
+  ctx.lineTo(comet.x, comet.y);
+  ctx.stroke();
+
+  const innerGrad = ctx.createLinearGradient(comet.x - comet.vx * 30, comet.y - comet.vy * 30, comet.x, comet.y);
+  innerGrad.addColorStop(0, 'rgba(200,240,255,0)');
+  innerGrad.addColorStop(1, 'rgba(255,255,255,' + (0.5 * alpha) + ')');
+  ctx.strokeStyle = innerGrad;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(comet.x - comet.vx * 30, comet.y - comet.vy * 30);
+  ctx.lineTo(comet.x, comet.y);
+  ctx.stroke();
+
+  const headGlow = ctx.createRadialGradient(comet.x, comet.y, 0, comet.x, comet.y, 12);
+  headGlow.addColorStop(0, 'rgba(220,245,255,' + (0.9 * alpha) + ')');
+  headGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = headGlow;
+  ctx.beginPath();
+  ctx.arc(comet.x, comet.y, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(comet.x, comet.y, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+  ctx.fill();
+}
+
+function maybeSpawnComet() {
+  cometTimer++;
+  if (!comet && cometTimer > 600 && Math.random() < 0.002) {
+    spawnComet();
+    cometTimer = 0;
+  }
 }
 
 function drawShootingStars() {
@@ -371,7 +695,12 @@ function drawShootingStars() {
 function draw() {
   ctx.clearRect(0, 0, w, h);
 
+  drawSun();
+  drawNebula();
+  drawConstellations();
+  drawAsteroidBelt();
   drawPlanets();
+  drawMoon();
   drawFloaters();
 
   for (let i = 0; i < stars.length; i++) {
@@ -400,6 +729,8 @@ function draw() {
 
   maybeSpawnShootingStar();
   drawShootingStars();
+  maybeSpawnComet();
+  drawComet();
 
   t += 1;
   requestAnimationFrame(draw);
