@@ -691,224 +691,252 @@ function drawShootingStars() {
 }
 
 // ── ROCKET ──────────────────────────────────────────────────────────────────
-// States: 'landed' | 'launching' | 'flying' | 'landing'
-const PLANET_POSITIONS = [
-  { x: 0.08, y: 0.18 },  // Neptune
-  { x: 0.92, y: 0.72 },  // Saturn
-  { x: 0.74, y: 0.07 },  // Earth
-  { x: 0.12, y: 0.72 },  // Jupiter
-  { x: 0.55, y: 0.92 },  // Mars
+var PLANET_DEFS = [
+  { x: 0.08, y: 0.18, r: 34 },
+  { x: 0.92, y: 0.72, r: 22 },
+  { x: 0.74, y: 0.07, r: 18 },
+  { x: 0.12, y: 0.72, r: 42 },
+  { x: 0.55, y: 0.92, r: 14 },
 ];
 
-const rocket = {
-  x: 0, y: 0,
-  angle: -Math.PI / 2,
-  state: 'landed',
-  stateTimer: 0,
-  landedDuration: 180,   // frames sitting on planet (~3s)
-  launchDuration: 60,    // frames lifting off
-  landDuration: 50,      // frames touching down
-  fromPlanet: 0,
-  toPlanet: 1,
-  progress: 0,
-  flamePhase: 0,
-  exhaustParticles: [],
+var rkt = {
+  x:0, y:0, travelAngle: -Math.PI/2,
+  state:'idle', stateTimer:0,
+  fromIdx:0, toIdx:1, progress:0,
+  flamePhase:0, initialized:false, exhaust:[],
+  frameCount:0,
+  bx:{fx:0,fy:0,mx:0,my:0,tx:0,ty:0},
 };
 
-// start on a random planet
-rocket.fromPlanet = Math.floor(Math.random() * PLANET_POSITIONS.length);
-const rp0 = PLANET_POSITIONS[rocket.fromPlanet];
-rocket.x = rp0.x * window.innerWidth;
-rocket.y = rp0.y * window.innerHeight;
-
-function pickNextPlanet(current) {
-  let next;
-  do { next = Math.floor(Math.random() * PLANET_POSITIONS.length); }
-  while (next === current);
-  return next;
+function rktSurface(idx) {
+  var pd = PLANET_DEFS[idx];
+  return { x: pd.x*w, y: pd.y*h - pd.r - 24 };
 }
 
-function drawRocketShape(alpha, flameOn) {
-  ctx.save();
-  const a = Math.max(0, Math.min(1, alpha));
+function rktPickNext(cur) {
+  var n; do { n = Math.floor(Math.random()*PLANET_DEFS.length); } while(n===cur);
+  return n;
+}
 
-  // exhaust flame
-  if (flameOn && a > 0.05) {
-    rocket.flamePhase += 0.25;
-    const flicker = 0.7 + Math.sin(rocket.flamePhase) * 0.3;
-    const fl = ctx.createRadialGradient(0, 14, 0, 0, 18, 14 * flicker);
-    fl.addColorStop(0, 'rgba(255,240,80,' + (0.95 * a) + ')');
-    fl.addColorStop(0.4, 'rgba(255,130,30,' + (0.7 * a) + ')');
-    fl.addColorStop(1, 'rgba(255,60,0,0)');
-    ctx.fillStyle = fl;
-    ctx.beginPath();
-    ctx.ellipse(0, 16 * flicker, 4, 12 * flicker, 0, 0, Math.PI * 2);
-    ctx.fill();
+function lerpAng(a,b,t) {
+  var d=b-a;
+  while(d>Math.PI) d-=Math.PI*2;
+  while(d<-Math.PI) d+=Math.PI*2;
+  return a+d*t;
+}
 
-    // exhaust particle
-    if (Math.random() < 0.4) {
-      const angle = rocket.angle + Math.PI / 2;
-      rocket.exhaustParticles.push({
-        x: rocket.x + Math.cos(angle + Math.PI) * 14,
-        y: rocket.y + Math.sin(angle + Math.PI) * 14,
-        vx: (Math.random() - 0.5) * 1.2 + Math.cos(angle + Math.PI) * 1.5,
-        vy: (Math.random() - 0.5) * 1.2 + Math.sin(angle + Math.PI) * 1.5,
-        life: 0, maxLife: 25 + Math.random() * 15,
-        size: 1.5 + Math.random() * 2,
-      });
-    }
+function rktDraw(alpha, flame) {
+  var a = Math.max(0, Math.min(1, alpha));
+  if (a < 0.01) return;
+
+  // ── FLAMES (behind body) ──
+  if (flame) {
+    rkt.flamePhase += 0.2;
+    var fl  = 0.76 + Math.sin(rkt.flamePhase) * 0.24;
+    var fl2 = 0.70 + Math.sin(rkt.flamePhase * 1.4 + 1) * 0.3;
+
+    var fg1 = ctx.createRadialGradient(-8, 18, 0, -8, 24, 8*fl);
+    fg1.addColorStop(0, 'rgba(255,240,60,'+(0.9*a)+')');
+    fg1.addColorStop(0.45, 'rgba(255,110,10,'+(0.75*a)+')');
+    fg1.addColorStop(1, 'rgba(220,50,0,0)');
+    ctx.fillStyle = fg1; ctx.beginPath();
+    ctx.ellipse(-8, 23*fl, 2.8, 7*fl, 0, 0, Math.PI*2); ctx.fill();
+
+    var fg2 = ctx.createRadialGradient(8, 18, 0, 8, 24, 8*fl2);
+    fg2.addColorStop(0, 'rgba(255,240,60,'+(0.9*a)+')');
+    fg2.addColorStop(0.45, 'rgba(255,110,10,'+(0.75*a)+')');
+    fg2.addColorStop(1, 'rgba(220,50,0,0)');
+    ctx.fillStyle = fg2; ctx.beginPath();
+    ctx.ellipse(8, 23*fl2, 2.8, 7*fl2, 0, 0, Math.PI*2); ctx.fill();
+
+    var fg3 = ctx.createRadialGradient(0, 20, 0, 0, 28, 11*fl);
+    fg3.addColorStop(0, 'rgba(255,252,90,'+(0.98*a)+')');
+    fg3.addColorStop(0.3, 'rgba(255,145,15,'+(0.88*a)+')');
+    fg3.addColorStop(1, 'rgba(200,40,0,0)');
+    ctx.fillStyle = fg3; ctx.beginPath();
+    ctx.ellipse(0, 26*fl, 4.5, 10*fl, 0, 0, Math.PI*2); ctx.fill();
   }
 
-  // body
-  ctx.fillStyle = 'rgba(220,225,240,' + (0.88 * a) + ')';
+  // ── LEFT BOOSTER (more separated) ──
+  ctx.fillStyle = 'rgba(185,42,42,'+(0.88*a)+')';
+  ctx.beginPath(); ctx.ellipse(-9, -2, 3, 13, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(215,60,60,'+(0.92*a)+')';
+  ctx.beginPath(); ctx.moveTo(-9,-15); ctx.lineTo(-12.5,-5); ctx.lineTo(-5.5,-5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(65,65,72,'+(0.75*a)+')';
+  ctx.fillRect(-12.2, 3, 6.5, 2);
+
+  // ── RIGHT BOOSTER (more separated) ──
+  ctx.fillStyle = 'rgba(185,42,42,'+(0.88*a)+')';
+  ctx.beginPath(); ctx.ellipse(9, -2, 3, 13, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(215,60,60,'+(0.92*a)+')';
+  ctx.beginPath(); ctx.moveTo(9,-15); ctx.lineTo(12.5,-5); ctx.lineTo(5.5,-5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(65,65,72,'+(0.75*a)+')';
+  ctx.fillRect(5.7, 3, 6.5, 2);
+
+  // ── ORANGE EXTERNAL TANK (more visible, slightly larger) ──
+  ctx.fillStyle = 'rgba(215,112,22,'+(0.92*a)+')';
+  ctx.beginPath(); ctx.ellipse(-1.5, -1, 4.5, 14, 0, 0, Math.PI*2); ctx.fill();
+  // tank nose
+  ctx.fillStyle = 'rgba(240,140,35,'+(0.95*a)+')';
+  ctx.beginPath(); ctx.moveTo(-1.5,-15); ctx.lineTo(-5.5,-6); ctx.lineTo(2.5,-6); ctx.closePath(); ctx.fill();
+  // subtle tank sheen
+  ctx.fillStyle = 'rgba(255,175,70,'+(0.2*a)+')';
+  ctx.beginPath(); ctx.ellipse(-2.5, -5, 1.5, 6, -0.2, 0, Math.PI*2); ctx.fill();
+
+  // ── SHUTTLE BODY ──
+  var bg = ctx.createLinearGradient(-6.5, 0, 6.5, 0);
+  bg.addColorStop(0, 'rgba(150,155,172,'+(0.92*a)+')');
+  bg.addColorStop(0.38, 'rgba(232,236,244,'+(0.97*a)+')');
+  bg.addColorStop(1, 'rgba(140,145,162,'+(0.90*a)+')');
+  ctx.fillStyle = bg;
   ctx.beginPath();
-  ctx.moveTo(0, -14);
-  ctx.bezierCurveTo(5, -8, 6, 0, 6, 10);
-  ctx.lineTo(-6, 10);
-  ctx.bezierCurveTo(-6, 0, -5, -8, 0, -14);
+  ctx.moveTo(0, -19);
+  ctx.bezierCurveTo(6.5, -14, 7, -4, 7, 7);
+  ctx.lineTo(7, 16); ctx.lineTo(-7, 16); ctx.lineTo(-7, 7);
+  ctx.bezierCurveTo(-7, -4, -6.5, -14, 0, -19);
   ctx.fill();
 
-  // nose cone
-  ctx.fillStyle = 'rgba(239,100,97,' + (0.9 * a) + ')';
-  ctx.beginPath();
-  ctx.moveTo(0, -20);
-  ctx.lineTo(4.5, -12);
-  ctx.lineTo(-4.5, -12);
-  ctx.closePath();
-  ctx.fill();
+  // ── NOSE CAP (dark but lighter so it reads against space) ──
+  ctx.fillStyle = 'rgba(95,95,112,'+(0.95*a)+')';
+  ctx.beginPath(); ctx.ellipse(0, -16, 4.5, 4.5, 0, 0, Math.PI*2); ctx.fill();
+  // subtle highlight
+  ctx.fillStyle = 'rgba(160,160,180,'+(0.45*a)+')';
+  ctx.beginPath(); ctx.arc(-1.2, -17.2, 1.5, 0, Math.PI*2); ctx.fill();
 
-  // window
-  ctx.fillStyle = 'rgba(167,220,255,' + (0.85 * a) + ')';
+  // ── WINGS ──
+  ctx.fillStyle = 'rgba(138,143,155,'+(0.82*a)+')';
   ctx.beginPath();
-  ctx.arc(0, -3, 3.5, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(-7, 2); ctx.lineTo(-19, 13); ctx.lineTo(-15, 16); ctx.lineTo(-7, 14);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(7, 2); ctx.lineTo(19, 13); ctx.lineTo(15, 16); ctx.lineTo(7, 14);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(48,48,58,'+(0.65*a)+')';
+  ctx.beginPath(); ctx.moveTo(-7,14); ctx.lineTo(-15,16); ctx.lineTo(-14,18); ctx.lineTo(-7,16); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(7,14); ctx.lineTo(15,16); ctx.lineTo(14,18); ctx.lineTo(7,16); ctx.closePath(); ctx.fill();
 
-  // fins
-  ctx.fillStyle = 'rgba(108,99,255,' + (0.75 * a) + ')';
-  ctx.beginPath();
-  ctx.moveTo(6, 8); ctx.lineTo(13, 14); ctx.lineTo(6, 14); ctx.closePath();
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(-6, 8); ctx.lineTo(-13, 14); ctx.lineTo(-6, 14); ctx.closePath();
-  ctx.fill();
+  // ── WINDOWS ──
+  ctx.fillStyle = 'rgba(85,195,245,'+(0.92*a)+')';
+  ctx.fillRect(-4.8, -9, 2.8, 2.2);
+  ctx.fillRect(-1.2, -9, 2.8, 2.2);
+  ctx.fillRect(-4.8, -5.8, 2.8, 2.2);
+  ctx.fillRect(-1.2, -5.8, 2.8, 2.2);
+  // window frame lines
+  ctx.strokeStyle = 'rgba(255,255,255,'+(0.35*a)+')';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(-4.8,-7); ctx.lineTo(1.6,-7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-1.2,-9); ctx.lineTo(-1.2,-3.6); ctx.stroke();
 
-  ctx.restore();
+  // ── ENGINE BLOCK ──
+  ctx.fillStyle = 'rgba(42,42,52,'+(0.92*a)+')';
+  ctx.fillRect(-6.5, 13.5, 13, 5);
+  ctx.fillStyle = 'rgba(175,40,40,'+(0.9*a)+')';
+  ctx.beginPath(); ctx.ellipse(-3.5, 18.8, 2.2, 1.8, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(0, 18.8, 2.2, 1.8, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(3.5, 18.8, 2.2, 1.8, 0, 0, Math.PI*2); ctx.fill();
+
+  // body outline
+  ctx.strokeStyle = 'rgba(35,35,45,'+(0.22*a)+')';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(0,-19);
+  ctx.bezierCurveTo(6.5,-14,7,-4,7,7);
+  ctx.lineTo(7,16); ctx.lineTo(-7,16); ctx.lineTo(-7,7);
+  ctx.bezierCurveTo(-7,-4,-6.5,-14,0,-19);
+  ctx.stroke();
 }
 
-function updateRocket() {
-  rocket.stateTimer++;
-  rocket.exhaustParticles = rocket.exhaustParticles.filter(function(p) { return p.life < p.maxLife; });
-  rocket.exhaustParticles.forEach(function(p) {
-    p.x += p.vx; p.y += p.vy;
-    p.life++;
-    const a = (1 - p.life / p.maxLife) * 0.5;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size * (1 - p.life / p.maxLife), 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,160,40,' + a + ')';
-    ctx.fill();
+function rktSpawnExhaust(on) {
+  if (!on || Math.random()>0.38) return;
+  var tailAng = rkt.travelAngle+Math.PI;
+  rkt.exhaust.push({
+    x:rkt.x+Math.cos(tailAng)*20, y:rkt.y+Math.sin(tailAng)*20,
+    vx:(Math.random()-0.5)*1.1+Math.cos(tailAng)*1.4,
+    vy:(Math.random()-0.5)*1.1+Math.sin(tailAng)*1.4,
+    life:0, maxLife:25+Math.random()*20, size:1.5+Math.random()*2,
   });
+}
 
-  const from = PLANET_POSITIONS[rocket.fromPlanet];
-  const to   = PLANET_POSITIONS[rocket.toPlanet];
+function rktDrawExhaust() {
+  rkt.exhaust = rkt.exhaust.filter(function(p){return p.life<p.maxLife;});
+  rkt.exhaust.forEach(function(p){
+    p.x+=p.vx; p.y+=p.vy; p.life++;
+    var a=(1-p.life/p.maxLife)*0.5;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*(1-p.life/p.maxLife*0.5),0,Math.PI*2);
+    ctx.fillStyle='rgba(255,155,35,'+a+')'; ctx.fill();
+  });
+}
 
-  if (rocket.state === 'landed') {
-    const px = from.x * w;
-    const py = from.y * h;
-    rocket.x = px;
-    rocket.y = py - planets[rocket.fromPlanet].r - 16;
-    ctx.save();
-    ctx.translate(rocket.x, rocket.y);
-    ctx.rotate(-Math.PI / 2 + Math.PI / 2); // sit upright on surface
-    drawRocketShape(1, false);
-    ctx.restore();
+function drawRocket() {
+  rkt.frameCount++;
+  if (!rkt.initialized) {
+    if (rkt.frameCount<15) return;
+    rkt.fromIdx = Math.floor(Math.random()*PLANET_DEFS.length);
+    var s0 = rktSurface(rkt.fromIdx);
+    rkt.x=s0.x; rkt.y=s0.y; rkt.travelAngle=-Math.PI/2;
+    rkt.state='landed'; rkt.stateTimer=0; rkt.initialized=true;
+  }
 
-    if (rocket.stateTimer > rocket.landedDuration) {
-      rocket.toPlanet = pickNextPlanet(rocket.fromPlanet);
-      rocket.state = 'launching';
-      rocket.stateTimer = 0;
+  rktDrawExhaust();
+  rkt.stateTimer++;
+
+  if (rkt.state==='landed') {
+    var s=rktSurface(rkt.fromIdx);
+    rkt.x=s.x; rkt.y=s.y; rkt.travelAngle=-Math.PI/2;
+    ctx.save(); ctx.translate(rkt.x,rkt.y); ctx.rotate(rkt.travelAngle+Math.PI/2);
+    rktDraw(1,false); ctx.restore();
+    if (rkt.stateTimer>660) {
+      rkt.toIdx=rktPickNext(rkt.fromIdx);
+      rkt.state='launching'; rkt.stateTimer=0;
     }
 
-  } else if (rocket.state === 'launching') {
-    const t = rocket.stateTimer / rocket.launchDuration;
-    const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    const px = from.x * w;
-    const py = from.y * h;
-    const surfaceY = py - planets[rocket.fromPlanet].r - 16;
-    const liftY = surfaceY - 60 * ease;
-    rocket.x = px;
-    rocket.y = liftY;
-    rocket.angle = -Math.PI / 2;
-    ctx.save();
-    ctx.translate(rocket.x, rocket.y);
-    ctx.rotate(0);
-    drawRocketShape(Math.min(t * 3, 1), true);
-    ctx.restore();
-
-    if (rocket.stateTimer >= rocket.launchDuration) {
-      rocket.state = 'flying';
-      rocket.stateTimer = 0;
-      rocket.progress = 0;
+  } else if (rkt.state==='launching') {
+    var ldur=100, t0=Math.min(rkt.stateTimer/ldur,1);
+    var ease0=t0<0.5?2*t0*t0:-1+(4-2*t0)*t0;
+    var sp=rktSurface(rkt.fromIdx), tp=rktSurface(rkt.toIdx);
+    var destAngle=Math.atan2(tp.y-sp.y,tp.x-sp.x);
+    rkt.travelAngle=lerpAng(-Math.PI/2,destAngle,ease0*0.7);
+    rkt.x=sp.x; rkt.y=sp.y-80*ease0;
+    rktSpawnExhaust(t0>0.15);
+    ctx.save(); ctx.translate(rkt.x,rkt.y); ctx.rotate(rkt.travelAngle+Math.PI/2);
+    rktDraw(1,t0>0.15); ctx.restore();
+    if (rkt.stateTimer>=ldur) {
+      var sp2=rktSurface(rkt.fromIdx), tp2=rktSurface(rkt.toIdx);
+      var fx=sp2.x,fy=sp2.y-80,tx2=tp2.x,ty2=tp2.y-80;
+      rkt.bx={fx:fx,fy:fy,tx:tx2,ty:ty2,
+        mx:(fx+tx2)/2+(ty2-fy)*0.3,
+        my:(fy+ty2)/2-(tx2-fx)*0.3};
+      rkt.progress=0; rkt.state='flying'; rkt.stateTimer=0;
     }
 
-  } else if (rocket.state === 'flying') {
-    const fromPx = from.x * w;
-    const fromPy = from.y * h - planets[rocket.fromPlanet].r - 76;
-    const toPx   = to.x * w;
-    const toPy   = to.y * h - planets[rocket.toPlanet].r - 76;
+  } else if (rkt.state==='flying') {
+    rkt.progress=Math.min(rkt.progress+1/600,1);
+    var bx=rkt.bx, tt=rkt.progress, mt=1-tt;
+    rkt.x=mt*mt*bx.fx+2*mt*tt*bx.mx+tt*tt*bx.tx;
+    rkt.y=mt*mt*bx.fy+2*mt*tt*bx.my+tt*tt*bx.ty;
+    var tanX=2*(1-tt)*(bx.mx-bx.fx)+2*tt*(bx.tx-bx.mx);
+    var tanY=2*(1-tt)*(bx.my-bx.fy)+2*tt*(bx.ty-bx.my);
+    if (Math.abs(tanX)>0.001||Math.abs(tanY)>0.001) rkt.travelAngle=Math.atan2(tanY,tanX);
+    rktSpawnExhaust(true);
+    ctx.save(); ctx.translate(rkt.x,rkt.y); ctx.rotate(rkt.travelAngle+Math.PI/2);
+    rktDraw(1,true); ctx.restore();
+    if (rkt.progress>=1) { rkt.state='landing'; rkt.stateTimer=0; }
 
-    const totalDist = Math.sqrt(Math.pow(toPx - fromPx, 2) + Math.pow(toPy - fromPy, 2));
-    const speed = 1.8;
-    rocket.progress += speed / totalDist;
-    rocket.progress = Math.min(rocket.progress, 1);
-
-    // smooth arc via quadratic bezier
-    const midX = (fromPx + toPx) / 2 + (toPy - fromPy) * 0.25;
-    const midY = (fromPy + toPy) / 2 - (toPx - fromPx) * 0.25;
-    const tt = rocket.progress;
-    const mt = 1 - tt;
-    rocket.x = mt * mt * fromPx + 2 * mt * tt * midX + tt * tt * toPx;
-    rocket.y = mt * mt * fromPy + 2 * mt * tt * midY + tt * tt * toPy;
-
-    // tangent for rotation
-    const tx = 2 * (1 - tt) * (midX - fromPx) + 2 * tt * (toPx - midX);
-    const ty = 2 * (1 - tt) * (midY - fromPy) + 2 * tt * (toPy - midY);
-    rocket.angle = Math.atan2(ty, tx) - Math.PI / 2;
-
-    ctx.save();
-    ctx.translate(rocket.x, rocket.y);
-    ctx.rotate(rocket.angle + Math.PI / 2);
-    drawRocketShape(1, true);
-    ctx.restore();
-
-    if (rocket.progress >= 1) {
-      rocket.state = 'landing';
-      rocket.stateTimer = 0;
-    }
-
-  } else if (rocket.state === 'landing') {
-    const t = rocket.stateTimer / rocket.landDuration;
-    const px = to.x * w;
-    const py = to.y * h;
-    const surfaceY = py - planets[rocket.toPlanet].r - 16;
-    const startY = surfaceY - 60 * (1 - t);
-    rocket.x = px;
-    rocket.y = startY;
-    rocket.angle = -Math.PI / 2;
-    ctx.save();
-    ctx.translate(rocket.x, rocket.y);
-    ctx.rotate(0);
-    drawRocketShape(1, t < 0.6);
-    ctx.restore();
-
-    if (rocket.stateTimer >= rocket.landDuration) {
-      rocket.fromPlanet = rocket.toPlanet;
-      rocket.state = 'landed';
-      rocket.stateTimer = 0;
+  } else if (rkt.state==='landing') {
+    var lndDur=120, t1=Math.min(rkt.stateTimer/lndDur,1);
+    var ease1=1-Math.pow(1-t1,2);
+    var sp3=rktSurface(rkt.toIdx);
+    rkt.x=sp3.x; rkt.y=sp3.y-80*(1-ease1);
+    rkt.travelAngle=lerpAng(rkt.travelAngle,-Math.PI/2,0.04);
+    rktSpawnExhaust(t1<0.5);
+    ctx.save(); ctx.translate(rkt.x,rkt.y); ctx.rotate(rkt.travelAngle+Math.PI/2);
+    rktDraw(1,t1<0.5); ctx.restore();
+    if (rkt.stateTimer>=lndDur) {
+      rkt.fromIdx=rkt.toIdx; rkt.travelAngle=-Math.PI/2;
+      rkt.state='landed'; rkt.stateTimer=0;
     }
   }
 }
-
-function drawRocket() { updateRocket(); }
 
 function draw() {
   ctx.clearRect(0, 0, w, h);
