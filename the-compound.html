@@ -325,6 +325,26 @@
       <button class="btn" id="logMeasBtn">Log Measurement</button>
       <div id="measList" style="margin-top:16px;"></div>
     </div>
+
+    <h2 class="section-title">Cardio / Run Log</h2>
+    <div class="card">
+      <div class="grid-3" style="margin-bottom:12px;">
+        <div><label>Date</label><input type="date" id="cardioDate"></div>
+        <div><label>Duration (min)</label><input type="number" id="cardioDuration" step="1" min="0"></div>
+        <div><label>Distance (km)</label><input type="number" id="cardioDistance" step="0.1" min="0"></div>
+      </div>
+      <div class="grid-3" style="margin-bottom:12px;">
+        <div><label>Avg Heart Rate (bpm)</label><input type="number" id="cardioHR" step="1" min="0"></div>
+        <div><label>Active Energy (cal)</label><input type="number" id="cardioCal" step="1" min="0"></div>
+        <div><label>Effort (RPE 1–10)</label><input type="number" id="cardioEffort" step="1" min="1" max="10"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label>Notes</label>
+        <input type="text" id="cardioNotes" placeholder="optional — route, how it felt, weather…">
+      </div>
+      <button class="btn" id="logCardioBtn">Log Cardio Session</button>
+      <div id="cardioList" style="margin-top:16px;"></div>
+    </div>
   </section>
 
   <!-- INJURY PROFILE -->
@@ -488,6 +508,7 @@
     return {
       program: starterProgram(),
       logs: [],
+      cardioLogs: [],
       measurements: [],
       checkins: [],
       prehabDone: {},
@@ -533,8 +554,9 @@
 
   /* ---------- STREAK ---------- */
   function computeStreak(){
-    if(state.logs.length===0) return 0;
-    const dates = [...new Set(state.logs.map(l=>l.date))].sort().reverse();
+    const activeDates = [...state.logs.map(l=>l.date), ...state.cardioLogs.map(l=>l.date)];
+    if(activeDates.length===0) return 0;
+    const dates = [...new Set(activeDates)].sort().reverse();
     let streak=0;
     let cursor = new Date();
     for(let i=0;i<dates.length;i++){
@@ -802,9 +824,61 @@
     renderMeasurements();
   });
 
+  function renderCardioList(){
+    const list = document.getElementById("cardioList");
+    list.innerHTML = "";
+    if(state.cardioLogs.length===0){
+      list.innerHTML = '<div class="empty-state">No cardio sessions logged yet.</div>';
+      return;
+    }
+    [...state.cardioLogs].sort((a,b)=> a.date < b.date ? 1 : -1).forEach(c=>{
+      const row = document.createElement("div");
+      row.className = "meas-row";
+      const summaryBits = [];
+      if(c.duration) summaryBits.push(c.duration+" min");
+      if(c.distance) summaryBits.push(c.distance+" km");
+      if(c.avgHR) summaryBits.push(c.avgHR+" bpm avg");
+      if(c.calories) summaryBits.push(c.calories+" cal");
+      if(c.effort) summaryBits.push("RPE "+c.effort);
+      row.innerHTML = `<span class="mono">${c.date}</span><span>${summaryBits.join(" · ")}</span><span style="color:var(--text-dim);">${c.notes||""}</span>`;
+      list.appendChild(row);
+    });
+  }
+  document.getElementById("logCardioBtn").addEventListener("click", ()=>{
+    const date = document.getElementById("cardioDate").value || todayStr();
+    const duration = document.getElementById("cardioDuration").value;
+    const distance = document.getElementById("cardioDistance").value;
+    const avgHR = document.getElementById("cardioHR").value;
+    const calories = document.getElementById("cardioCal").value;
+    const effort = document.getElementById("cardioEffort").value;
+    const notes = document.getElementById("cardioNotes").value;
+    if(!duration && !distance && !avgHR && !calories && !effort && !notes) return;
+    state.cardioLogs.push({
+      date,
+      duration: duration?Number(duration):null,
+      distance: distance?Number(distance):null,
+      avgHR: avgHR?Number(avgHR):null,
+      calories: calories?Number(calories):null,
+      effort: effort?Number(effort):null,
+      notes
+    });
+    saveState();
+    document.getElementById("cardioDuration").value = "";
+    document.getElementById("cardioDistance").value = "";
+    document.getElementById("cardioHR").value = "";
+    document.getElementById("cardioCal").value = "";
+    document.getElementById("cardioEffort").value = "";
+    document.getElementById("cardioNotes").value = "";
+    document.getElementById("cardioDate").value = todayStr();
+    renderCardioList();
+    renderStreak();
+    renderCoach();
+  });
+
   function renderProgress(){
     renderPRs();
     renderMeasurements();
+    renderCardioList();
   }
 
   /* ---------- INJURY PROFILE ---------- */
@@ -832,20 +906,31 @@
   function renderCoach(){
     const streak = computeStreak();
     const lastLog = state.logs[state.logs.length-1];
+    const lastCardio = state.cardioLogs[state.cardioLogs.length-1];
+    let lastActivity = null;
+    if(lastLog && lastCardio){
+      lastActivity = lastLog.date >= lastCardio.date
+        ? {type:"lift", date:lastLog.date, label:lastLog.dayName}
+        : {type:"cardio", date:lastCardio.date, label:"your run/cardio session"};
+    } else if(lastLog){
+      lastActivity = {type:"lift", date:lastLog.date, label:lastLog.dayName};
+    } else if(lastCardio){
+      lastActivity = {type:"cardio", date:lastCardio.date, label:"your run/cardio session"};
+    }
     let msg;
-    if(state.logs.length===0){
+    if(!lastActivity){
       msg = "Good to have you. Start with whatever today's session is — we'll build momentum from there.";
     } else if(streak >= 4){
       msg = `${streak} days in a row — that's a real streak. Keep an eye on recovery so it stays sustainable.`;
-    } else if(lastLog){
-      const daysSince = Math.round((new Date() - new Date(lastLog.date))/86400000);
-      if(daysSince >= 4){
-        msg = "It's been a few days since your last logged session. No lecture — just pick back up with the next day on the split.";
-      } else {
-        msg = `Solid work on ${lastLog.dayName}. Stay consistent with the cuff and single-leg work — that's what's protecting the comeback.`;
-      }
     } else {
-      msg = "Let's get to work.";
+      const daysSince = Math.round((new Date() - new Date(lastActivity.date))/86400000);
+      if(daysSince >= 4){
+        msg = "It's been a few days since your last logged session. No lecture — just pick back up with the next day on the split, or get a run in.";
+      } else if(lastActivity.type === "cardio"){
+        msg = "Good work getting a cardio session in. Keep the aerobic base building alongside the lifting — it's not either/or.";
+      } else {
+        msg = `Solid work on ${lastActivity.label}. Stay consistent with the cuff and single-leg work — that's what's protecting the comeback.`;
+      }
     }
     document.getElementById("coachMessage").textContent = msg;
 
@@ -893,6 +978,7 @@
     renderProgress();
     renderPrehab();
     renderCoach();
+    document.getElementById("cardioDate").value = todayStr();
   }
   init();
 
